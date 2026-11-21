@@ -1,0 +1,21 @@
+# Unreal Engine 5.4 .gitignore
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+.vscode/
+.idea/
+*.VC.db
+*.opensdf
+*.opendb
+*.sdf
+*.sln
+*.suo
+*.xcworkspace
+*.xcodeproj
+Makefile
+CMakeLists.txt
+.vsconfig
+*.log
