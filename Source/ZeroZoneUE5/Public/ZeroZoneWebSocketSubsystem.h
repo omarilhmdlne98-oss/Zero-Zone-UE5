@@ -38,7 +38,7 @@ public:
 	void SendPlayerState(const FZeroZoneNetworkPlayerState& PlayerState);
 
 	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Networking")
-	void SendCombatEvent(const FString& EventType, const FString& PlayerId, const FString& TargetId, float Value);
+	void SendCombatEvent(const FString& EventType, const FString& PlayerId, const FString& TargetId, float Value, const FString& WeaponId = TEXT("rifle"), const FString& HitZone = TEXT("torso"));
 
 	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Networking")
 	void SendOperatorSelection(const FString& PlayerId, EZeroZoneOperatorClass OperatorClass);

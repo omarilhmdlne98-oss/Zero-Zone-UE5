@@ -18,7 +18,8 @@ public class ZeroZoneUE5 : ModuleRules
 			"NetCore",
 			"WebSockets",
 			"Json",
-			"JsonUtilities"
+			"JsonUtilities",
+			"AIModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

@@ -2,12 +2,18 @@
 
 #include "ZeroZoneWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
+#include "ZeroZoneCharacter.h"
+#include "ZeroZoneHUD.h"
+#include "ZeroZoneWebSocketSubsystem.h"
 #include "ZeroZoneUE5.h"
 
 AZeroZoneWeapon::AZeroZoneWeapon()
@@ -33,6 +39,81 @@ void AZeroZoneWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 void AZeroZoneWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CurrentAmmo = WeaponStats.MaxMagazineAmmo;
+	ReserveAmmo = WeaponStats.MaxReserveAmmo;
+	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
+}
+
+void AZeroZoneWeapon::SetADS(bool bNewADS)
+{
+	bIsADS = bNewADS;
+}
+
+void AZeroZoneWeapon::ConfigureWeaponPreset(EZeroZoneWeaponType PresetType)
+{
+	WeaponStats.WeaponType = PresetType;
+
+	switch (PresetType)
+	{
+	case EZeroZoneWeaponType::SniperRifle:
+		WeaponStats.WeaponId = TEXT("railgun");
+		WeaponStats.WeaponName = TEXT("XR-9 Railgun");
+		WeaponStats.BaseDamage = 68.f;
+		WeaponStats.FireRate = 1.2f;
+		WeaponStats.Range = 25000.f;
+		WeaponStats.MuzzleVelocity = 26000.f;
+		WeaponStats.BulletDropGravity = 320.f;
+		WeaponStats.PelletCount = 1;
+		WeaponStats.RecoilPitch = 1.85f;
+		WeaponStats.RecoilYaw = 0.35f;
+		WeaponStats.BaseSpreadDegrees = 0.45f;
+		WeaponStats.ADSSpreadMultiplier = 0.10f;
+		WeaponStats.MaxMagazineAmmo = 6;
+		WeaponStats.MaxReserveAmmo = 30;
+		WeaponStats.ReloadDuration = 2.3f;
+		WeaponStats.bIsAutomatic = false;
+		break;
+
+	case EZeroZoneWeaponType::Shotgun:
+		WeaponStats.WeaponId = TEXT("shotgun");
+		WeaponStats.WeaponName = TEXT("M-12 Heavy Shotgun");
+		WeaponStats.BaseDamage = 14.f;
+		WeaponStats.FireRate = 1.6f;
+		WeaponStats.Range = 6500.f;
+		WeaponStats.MuzzleVelocity = 9500.f;
+		WeaponStats.BulletDropGravity = 1100.f;
+		WeaponStats.PelletCount = 6;
+		WeaponStats.RecoilPitch = 1.65f;
+		WeaponStats.RecoilYaw = 0.55f;
+		WeaponStats.BaseSpreadDegrees = 4.5f;
+		WeaponStats.ADSSpreadMultiplier = 0.65f;
+		WeaponStats.MaxMagazineAmmo = 8;
+		WeaponStats.MaxReserveAmmo = 40;
+		WeaponStats.ReloadDuration = 2.1f;
+		WeaponStats.bIsAutomatic = false;
+		break;
+
+	case EZeroZoneWeaponType::AssaultRifle:
+	default:
+		WeaponStats.WeaponId = TEXT("rifle");
+		WeaponStats.WeaponName = TEXT("VX-47 Assault Rifle");
+		WeaponStats.BaseDamage = 24.f;
+		WeaponStats.FireRate = 9.0f;
+		WeaponStats.Range = 15000.f;
+		WeaponStats.MuzzleVelocity = 12000.f;
+		WeaponStats.BulletDropGravity = 980.f;
+		WeaponStats.PelletCount = 1;
+		WeaponStats.RecoilPitch = 0.55f;
+		WeaponStats.RecoilYaw = 0.22f;
+		WeaponStats.BaseSpreadDegrees = 1.2f;
+		WeaponStats.ADSSpreadMultiplier = 0.35f;
+		WeaponStats.MaxMagazineAmmo = 30;
+		WeaponStats.MaxReserveAmmo = 150;
+		WeaponStats.ReloadDuration = 1.8f;
+		WeaponStats.bIsAutomatic = true;
+		break;
+	}
 
 	CurrentAmmo = WeaponStats.MaxMagazineAmmo;
 	ReserveAmmo = WeaponStats.MaxReserveAmmo;
@@ -89,6 +170,22 @@ void AZeroZoneWeapon::StopFire()
 	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
 }
 
+void AZeroZoneWeapon::ApplyRecoilToOwner()
+{
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	if (!OwnerPawn || !OwnerPawn->IsLocallyControlled())
+	{
+		return;
+	}
+
+	const float RecoilScale = bIsADS ? 0.65f : 1.0f;
+	const float PitchKick = -WeaponStats.RecoilPitch * RecoilScale;
+	const float YawKick = FMath::FRandRange(-WeaponStats.RecoilYaw, WeaponStats.RecoilYaw) * RecoilScale;
+
+	OwnerPawn->AddControllerPitchInput(PitchKick);
+	OwnerPawn->AddControllerYawInput(YawKick);
+}
+
 void AZeroZoneWeapon::HandleFireShot()
 {
 	if (!CanFire())
@@ -121,11 +218,13 @@ void AZeroZoneWeapon::HandleFireShot()
 		ViewRotation = GetActorRotation();
 	}
 
-	const float SpreadRad = FMath::DegreesToRadians(WeaponStats.BaseSpreadDegrees);
+	const float EffectiveSpreadDeg = WeaponStats.BaseSpreadDegrees * (bIsADS ? WeaponStats.ADSSpreadMultiplier : 1.0f);
+	const float SpreadRad = FMath::DegreesToRadians(EffectiveSpreadDeg);
 	const FVector ShotDirection = FMath::VRandCone(ViewRotation.Vector(), SpreadRad);
 	const FVector TraceEnd = ViewLocation + (ShotDirection * WeaponStats.Range);
 
 	LastFireTime = GetWorld()->GetTimeSeconds();
+	ApplyRecoilToOwner();
 
 	if (HasAuthority())
 	{
@@ -146,6 +245,47 @@ void AZeroZoneWeapon::ServerFire_Implementation(const FVector& TraceStart, const
 	ExecuteHitscan(TraceStart, TraceEnd);
 }
 
+void AZeroZoneWeapon::ExecuteBallisticTrace(const FVector& StartLocation, const FVector& ShotDirection, FHitResult& OutHit, FVector& OutImpactPoint) const
+{
+	OutImpactPoint = StartLocation + (ShotDirection * WeaponStats.Range);
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	if (AActor* MyOwner = GetOwner())
+	{
+		QueryParams.AddIgnoredActor(MyOwner);
+	}
+	QueryParams.bTraceComplex = true;
+
+	// Segmented ballistic arc simulation with muzzle velocity and gravity bullet drop
+	const int32 NumSegments = 6;
+	const float TotalFlightTime = WeaponStats.Range / FMath::Max(WeaponStats.MuzzleVelocity, 1000.f);
+	const float StepTime = TotalFlightTime / static_cast<float>(NumSegments);
+	const FVector GravityVec(0.f, 0.f, -WeaponStats.BulletDropGravity);
+
+	FVector CurrentPos = StartLocation;
+	FVector CurrentVel = ShotDirection.GetSafeNormal() * WeaponStats.MuzzleVelocity;
+
+	for (int32 Step = 0; Step < NumSegments; ++Step)
+	{
+		const FVector NextPos = CurrentPos + (CurrentVel * StepTime) + (0.5f * GravityVec * StepTime * StepTime);
+		CurrentVel += GravityVec * StepTime;
+
+		if (GetWorld()->LineTraceSingleByChannel(OutHit, CurrentPos, NextPos, ECC_Visibility, QueryParams))
+		{
+			OutImpactPoint = OutHit.ImpactPoint;
+			return;
+		}
+		CurrentPos = NextPos;
+	}
+
+	OutImpactPoint = CurrentPos;
+}
+
 void AZeroZoneWeapon::ExecuteHitscan(const FVector& TraceStart, const FVector& TraceEnd)
 {
 	if (!HasAuthority() || !CanFire())
@@ -156,43 +296,65 @@ void AZeroZoneWeapon::ExecuteHitscan(const FVector& TraceStart, const FVector& T
 	CurrentAmmo = FMath::Max(0, CurrentAmmo - 1);
 	OnAmmoChanged.Broadcast(CurrentAmmo, ReserveAmmo);
 
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	if (AActor* MyOwner = GetOwner())
+	const FVector BaseDir = (TraceEnd - TraceStart).GetSafeNormal();
+	const int32 NumPellets = FMath::Max(1, WeaponStats.PelletCount);
+	const float EffectiveSpreadDeg = WeaponStats.BaseSpreadDegrees * (bIsADS ? WeaponStats.ADSSpreadMultiplier : 1.0f);
+	const float PelletSpreadRad = FMath::DegreesToRadians(EffectiveSpreadDeg);
+
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	AController* InstigatorController = OwnerPawn ? OwnerPawn->GetController() : nullptr;
+	FVector LastImpactPoint = TraceEnd;
+	bool bAnyHit = false;
+
+	for (int32 Pellet = 0; Pellet < NumPellets; ++Pellet)
 	{
-		QueryParams.AddIgnoredActor(MyOwner);
+		const FVector PelletDir = (Pellet == 0) ? BaseDir : FMath::VRandCone(BaseDir, PelletSpreadRad);
+		FHitResult Hit;
+		FVector ImpactPoint = TraceEnd;
+		ExecuteBallisticTrace(TraceStart, PelletDir, Hit, ImpactPoint);
+		LastImpactPoint = ImpactPoint;
+
+		if (Hit.bBlockingHit && Hit.GetActor())
+		{
+			bAnyHit = true;
+			const EZeroZoneHitZone HitZone = AZeroZoneCharacter::ResolveHitZoneFromBone(Hit.BoneName);
+			const bool bIsHeadshot = (HitZone == EZeroZoneHitZone::Head);
+
+			UGameplayStatics::ApplyPointDamage(
+				Hit.GetActor(),
+				WeaponStats.BaseDamage,
+				PelletDir,
+				Hit,
+				InstigatorController,
+				this,
+				UDamageType::StaticClass()
+			);
+
+			if (APlayerController* PC = Cast<APlayerController>(InstigatorController))
+			{
+				if (AZeroZoneHUD* HUD = Cast<AZeroZoneHUD>(PC->GetHUD()))
+				{
+					HUD->TriggerHitmarker(bIsHeadshot);
+				}
+			}
+
+			if (UGameInstance* GI = GetGameInstance())
+			{
+				if (UZeroZoneWebSocketSubsystem* WS = GI->GetSubsystem<UZeroZoneWebSocketSubsystem>())
+				{
+					if (WS->IsConnected())
+					{
+						const FString AttackerId = (OwnerPawn && OwnerPawn->GetPlayerState()) ? OwnerPawn->GetPlayerState()->GetPlayerName() : GetName();
+						const FString TargetId = Hit.GetActor()->GetName();
+						const FString ZoneStr = bIsHeadshot ? TEXT("head") : (HitZone == EZeroZoneHitZone::Limb ? TEXT("limb") : TEXT("torso"));
+						WS->SendCombatEvent(TEXT("hit_player"), AttackerId, TargetId, WeaponStats.BaseDamage, WeaponStats.WeaponId, ZoneStr);
+					}
+				}
+			}
+		}
 	}
-	QueryParams.bTraceComplex = true;
 
-	FHitResult Hit;
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(
-		Hit,
-		TraceStart,
-		TraceEnd,
-		ECC_Visibility,
-		QueryParams
-	);
-
-	const FVector ImpactPoint = bHit ? Hit.ImpactPoint : TraceEnd;
-
-	if (bHit && Hit.GetActor())
-	{
-		APawn* OwnerPawn = Cast<APawn>(GetOwner());
-		AController* InstigatorController = OwnerPawn ? OwnerPawn->GetController() : nullptr;
-		const FVector ShotDir = (TraceEnd - TraceStart).GetSafeNormal();
-
-		UGameplayStatics::ApplyPointDamage(
-			Hit.GetActor(),
-			WeaponStats.BaseDamage,
-			ShotDir,
-			Hit,
-			InstigatorController,
-			this,
-			UDamageType::StaticClass()
-		);
-	}
-
-	MulticastPlayFireEffects(ImpactPoint, bHit);
+	MulticastPlayFireEffects(LastImpactPoint, bAnyHit);
 }
 
 void AZeroZoneWeapon::MulticastPlayFireEffects_Implementation(const FVector& ImpactPoint, bool bHitSomething)

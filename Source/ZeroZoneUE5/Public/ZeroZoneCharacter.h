@@ -12,12 +12,14 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UStaticMeshComponent;
 class UZeroZoneCombatComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedSignature, float, CurrentHealth, float, MaxHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShieldChangedSignature, float, CurrentShield, float, MaxShield);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOperatorClassChangedSignature, EZeroZoneOperatorClass, NewOperatorClass);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDiedSignature, AZeroZoneCharacter*, DeadCharacter);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLocomotionStateChangedSignature, EZeroZoneLocomotionState, NewLocomotionState);
 
 UCLASS()
 class ZEROZONEUE5_API AZeroZoneCharacter : public ACharacter
@@ -38,11 +40,56 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Operator")
 	void ActivateTacticalAbility();
 
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	void StartADS();
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	void StopADS();
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	void ToggleTacticalCrouch();
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	void StartSlide();
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	bool TryMantleVault();
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
+	void SetLeanInput(float LeanDirection);
+
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
 	static FZeroZoneOperatorStats GetOperatorStatsForClass(EZeroZoneOperatorClass ClassType);
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
+	static FZeroZoneTacticalLoadout GetTacticalLoadoutForClass(EZeroZoneOperatorClass ClassType);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Combat")
+	static EZeroZoneHitZone ResolveHitZoneFromBone(FName BoneName);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Combat")
+	static float GetDamageMultiplierForHitZone(EZeroZoneHitZone HitZone);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
 	EZeroZoneOperatorClass GetOperatorClass() const { return OperatorClass; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
+	const FZeroZoneTacticalLoadout& GetTacticalLoadout() const { return CurrentLoadout; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Animation")
+	const FZeroZoneIKAnimationData& GetIKAnimationData() const { return IKAnimData; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Movement")
+	EZeroZoneLocomotionState GetLocomotionState() const { return LocomotionState; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Movement")
+	bool IsADS() const { return bIsADS; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Movement")
+	bool IsSliding() const { return bIsSliding; }
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Movement")
+	float GetCurrentLeanAngle() const { return CurrentLeanAngle; }
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Stats")
 	float GetHealth() const { return Health; }
@@ -77,8 +124,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "ZeroZone|Events")
 	FOnCharacterDiedSignature OnCharacterDied;
 
+	UPROPERTY(BlueprintAssignable, Category = "ZeroZone|Events")
+	FOnLocomotionStateChangedSignature OnLocomotionStateChanged;
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -87,8 +138,19 @@ protected:
 	void StartFire();
 	void StopFire();
 	void ReloadWeapon();
+	void StartLeanLeft();
+	void StopLeanLeft();
+	void StartLeanRight();
+	void StopLeanRight();
 
 	void ApplyOperatorStats(bool bResetVitals);
+	void ApplyOperatorLoadout();
+	void UpdateMovementSpeed();
+	void UpdateLocomotionState();
+	void UpdateCameraAndLean(float DeltaTime);
+	void UpdateProceduralIK(float DeltaTime);
+	float TraceFootIKOffset(FName FootSocketName) const;
+	void EndSlide();
 	void EndTacticalAbility();
 	void ResetAbilityCooldown();
 	void SyncStateToWebSocket();
@@ -101,6 +163,12 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewSprinting);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetADS(bool bNewADS);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetLeanAngle(float NewTargetLean);
 
 	UFUNCTION()
 	void OnRep_OperatorClass();
@@ -127,6 +195,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UZeroZoneCombatComponent> CombatComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Equipment")
+	TObjectPtr<UStaticMeshComponent> TacticalHelmetMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Equipment")
+	TObjectPtr<UStaticMeshComponent> PlateCarrierMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components|Equipment")
+	TObjectPtr<UStaticMeshComponent> HolsteredSidearmMesh;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
@@ -143,6 +220,18 @@ protected:
 	TObjectPtr<UInputAction> SprintAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> CrouchAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> ADSAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> LeanLeftAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> LeanRightAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> FireAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
@@ -157,11 +246,20 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ZeroZone|Operator")
 	FZeroZoneOperatorStats CurrentOperatorStats;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ZeroZone|Operator")
+	FZeroZoneTacticalLoadout CurrentLoadout;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ZeroZone|Animation")
+	FZeroZoneIKAnimationData IKAnimData;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ZeroZone|Movement")
+	EZeroZoneLocomotionState LocomotionState = EZeroZoneLocomotionState::Idle;
+
 	UPROPERTY(ReplicatedUsing = OnRep_Health, BlueprintReadOnly, Category = "ZeroZone|Stats")
-	float Health = 120.f;
+	float Health = 100.f;
 
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "ZeroZone|Stats")
-	float MaxHealth = 120.f;
+	float MaxHealth = 100.f;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Shield, BlueprintReadOnly, Category = "ZeroZone|Stats")
 	float Shield = 50.f;
@@ -172,19 +270,48 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "ZeroZone|Movement")
 	bool bIsSprinting = false;
 
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "ZeroZone|Movement")
+	bool bIsADS = false;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "ZeroZone|Movement")
+	bool bIsSliding = false;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "ZeroZone|Movement")
+	float TargetLeanAngle = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "ZeroZone|Movement")
+	float CurrentLeanAngle = 0.f;
+
 	UPROPERTY(ReplicatedUsing = OnRep_IsAbilityActive, BlueprintReadOnly, Category = "ZeroZone|Operator")
 	bool bIsAbilityActive = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_IsDead, BlueprintReadOnly, Category = "ZeroZone|Stats")
 	bool bIsDead = false;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Camera")
+	float DefaultFOV = 90.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Camera")
+	float ADSFOV = 62.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Camera")
+	float MaxLeanDegrees = 16.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Camera")
+	float LeanCameraOffset = 28.f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Networking")
 	float WebSocketSyncInterval = 0.05f;
 
 	bool bIsAbilityOnCooldown = false;
+	bool bRiotBarrierActive = false;
+	bool bThermalScannerActive = false;
+	bool bLeanLeftHeld = false;
+	bool bLeanRightHeld = false;
 	float ActiveDamageReductionBonus = 0.f;
 	float WebSocketSyncAccumulator = 0.f;
 
+	FTimerHandle SlideTimerHandle;
 	FTimerHandle AbilityDurationTimerHandle;
 	FTimerHandle AbilityCooldownTimerHandle;
 };

@@ -9,6 +9,29 @@
 AZeroZoneArenaGameState::AZeroZoneArenaGameState()
 {
 	bReplicates = true;
+
+	// Default PBR surface catalog for tactical multi-tier arena structures
+	FZeroZoneArenaSurfaceConfig Concrete;
+	Concrete.SurfaceName = TEXT("Weathered Concrete");
+	Concrete.Roughness = 0.85f;
+	Concrete.Metallic = 0.05f;
+	Concrete.bDestructible = false;
+	ArenaSurfaceConfigs.Add(Concrete);
+
+	FZeroZoneArenaSurfaceConfig BrushedSteel;
+	BrushedSteel.SurfaceName = TEXT("Brushed Ballistic Steel");
+	BrushedSteel.Roughness = 0.34f;
+	BrushedSteel.Metallic = 0.85f;
+	BrushedSteel.bDestructible = false;
+	ArenaSurfaceConfigs.Add(BrushedSteel);
+
+	FZeroZoneArenaSurfaceConfig SupplyCrate;
+	SupplyCrate.SurfaceName = TEXT("Reinforced Tactical Crate");
+	SupplyCrate.Roughness = 0.72f;
+	SupplyCrate.Metallic = 0.28f;
+	SupplyCrate.bDestructible = true;
+	SupplyCrate.MaxDurability = 100.f;
+	ArenaSurfaceConfigs.Add(SupplyCrate);
 }
 
 void AZeroZoneArenaGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -19,6 +42,11 @@ void AZeroZoneArenaGameState::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(AZeroZoneArenaGameState, TeamAScore);
 	DOREPLIFETIME(AZeroZoneArenaGameState, TeamBScore);
 	DOREPLIFETIME(AZeroZoneArenaGameState, MatchPhase);
+	DOREPLIFETIME(AZeroZoneArenaGameState, LightingPreset);
+	DOREPLIFETIME(AZeroZoneArenaGameState, TimeOfDayHours);
+	DOREPLIFETIME(AZeroZoneArenaGameState, VaultBreachProgress);
+	DOREPLIFETIME(AZeroZoneArenaGameState, BreachingPlayerId);
+	DOREPLIFETIME(AZeroZoneArenaGameState, DestroyedCoverIds);
 }
 
 void AZeroZoneArenaGameState::SetMatchTimeRemaining(float NewTimeRemaining)
@@ -58,6 +86,34 @@ void AZeroZoneArenaGameState::AddTeamScore(int32 TeamIndex, int32 Points)
 	OnTeamScoresUpdated.Broadcast(TeamAScore, TeamBScore);
 }
 
+void AZeroZoneArenaGameState::SetLightingPreset(EZeroZoneLightingPreset NewPreset, float NewTimeOfDayHours)
+{
+	if (HasAuthority())
+	{
+		LightingPreset = NewPreset;
+		TimeOfDayHours = FMath::Clamp(NewTimeOfDayHours, 0.f, 24.f);
+		OnLightingPresetChanged.Broadcast(LightingPreset, TimeOfDayHours);
+	}
+}
+
+void AZeroZoneArenaGameState::SetVaultBreachState(float NewProgress, const FString& NewBreachingPlayerId)
+{
+	if (HasAuthority())
+	{
+		VaultBreachProgress = FMath::Clamp(NewProgress, 0.f, 20.f);
+		BreachingPlayerId = NewBreachingPlayerId;
+		OnVaultBreachUpdated.Broadcast(VaultBreachProgress, BreachingPlayerId);
+	}
+}
+
+void AZeroZoneArenaGameState::RegisterCoverDestroyed(const FString& CoverId)
+{
+	if (HasAuthority() && !CoverId.IsEmpty())
+	{
+		DestroyedCoverIds.AddUnique(CoverId);
+	}
+}
+
 void AZeroZoneArenaGameState::MulticastBroadcastKillFeed_Implementation(const FString& KillerName, const FString& VictimName, const FString& WeaponName, bool bIsHeadshot)
 {
 	if (!GetWorld())
@@ -87,4 +143,14 @@ void AZeroZoneArenaGameState::OnRep_TeamScores()
 void AZeroZoneArenaGameState::OnRep_MatchPhase()
 {
 	OnMatchPhaseChanged.Broadcast(MatchPhase);
+}
+
+void AZeroZoneArenaGameState::OnRep_LightingPreset()
+{
+	OnLightingPresetChanged.Broadcast(LightingPreset, TimeOfDayHours);
+}
+
+void AZeroZoneArenaGameState::OnRep_VaultBreachProgress()
+{
+	OnVaultBreachUpdated.Broadcast(VaultBreachProgress, BreachingPlayerId);
 }

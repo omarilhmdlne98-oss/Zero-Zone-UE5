@@ -42,6 +42,8 @@ void UZeroZoneCombatComponent::SpawnDefaultWeapons()
 	if (DefaultWeaponClasses.IsEmpty())
 	{
 		DefaultWeaponClasses.Add(AZeroZoneWeapon::StaticClass());
+		DefaultWeaponClasses.Add(AZeroZoneWeapon::StaticClass());
+		DefaultWeaponClasses.Add(AZeroZoneWeapon::StaticClass());
 	}
 
 	FActorSpawnParameters SpawnParams;
@@ -49,8 +51,15 @@ void UZeroZoneCombatComponent::SpawnDefaultWeapons()
 	SpawnParams.Instigator = Cast<APawn>(GetOwner());
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	for (const TSubclassOf<AZeroZoneWeapon>& WeaponClass : DefaultWeaponClasses)
+	const EZeroZoneWeaponType DefaultPresets[3] = {
+		EZeroZoneWeaponType::AssaultRifle,
+		EZeroZoneWeaponType::SniperRifle,
+		EZeroZoneWeaponType::Shotgun
+	};
+
+	for (int32 Idx = 0; Idx < DefaultWeaponClasses.Num(); ++Idx)
 	{
+		const TSubclassOf<AZeroZoneWeapon>& WeaponClass = DefaultWeaponClasses[Idx];
 		if (!WeaponClass)
 		{
 			continue;
@@ -64,6 +73,10 @@ void UZeroZoneCombatComponent::SpawnDefaultWeapons()
 
 		if (SpawnedWeapon)
 		{
+			if (Idx < 3)
+			{
+				SpawnedWeapon->ConfigureWeaponPreset(DefaultPresets[Idx]);
+			}
 			SpawnedWeapon->SetActorHiddenInGame(true);
 			Weapons.Add(SpawnedWeapon);
 		}
@@ -142,6 +155,14 @@ void UZeroZoneCombatComponent::Reload()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Reload();
+	}
+}
+
+void UZeroZoneCombatComponent::SetADS(bool bNewADS)
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->SetADS(bNewADS);
 	}
 }
 

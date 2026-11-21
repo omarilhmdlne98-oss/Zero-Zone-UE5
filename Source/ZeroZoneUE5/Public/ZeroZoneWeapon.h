@@ -31,6 +31,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void Reload();
 
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void SetADS(bool bNewADS);
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void ConfigureWeaponPreset(EZeroZoneWeaponType PresetType);
+
+	UFUNCTION(BlueprintPure, Category = "Weapon")
+	bool IsADS() const { return bIsADS; }
+
 	UFUNCTION(BlueprintPure, Category = "Weapon")
 	bool CanFire() const;
 
@@ -60,6 +69,8 @@ protected:
 
 	void HandleFireShot();
 	void ExecuteHitscan(const FVector& TraceStart, const FVector& TraceEnd);
+	void ExecuteBallisticTrace(const FVector& StartLocation, const FVector& ShotDirection, FHitResult& OutHit, FVector& OutImpactPoint) const;
+	void ApplyRecoilToOwner();
 	void FinishReload();
 
 	UFUNCTION(Server, Reliable)
@@ -100,4 +111,5 @@ protected:
 	FTimerHandle ReloadTimerHandle;
 	float LastFireTime = -100.f;
 	bool bIsFiring = false;
+	bool bIsADS = false;
 };

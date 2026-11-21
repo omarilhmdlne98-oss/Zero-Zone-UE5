@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void Reload();
 
+	UFUNCTION(BlueprintCallable, Category = "Combat")
+	void SetADS(bool bNewADS);
+
 	UFUNCTION(BlueprintPure, Category = "Combat")
 	AZeroZoneWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 

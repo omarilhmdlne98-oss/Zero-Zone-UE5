@@ -95,6 +95,10 @@ void UZeroZoneWebSocketSubsystem::SendPlayerState(const FZeroZoneNetworkPlayerSt
 	RootObj->SetNumberField(TEXT("shield"), PlayerState.Shield);
 	RootObj->SetBoolField(TEXT("isFiring"), PlayerState.bIsFiring);
 	RootObj->SetBoolField(TEXT("isAbilityActive"), PlayerState.bIsAbilityActive);
+	RootObj->SetStringField(TEXT("weaponId"), PlayerState.WeaponId);
+	RootObj->SetBoolField(TEXT("isADS"), PlayerState.bIsADS);
+	RootObj->SetBoolField(TEXT("isCrouching"), PlayerState.bIsCrouching);
+	RootObj->SetNumberField(TEXT("leanAngle"), PlayerState.LeanAngle);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
@@ -104,7 +108,7 @@ void UZeroZoneWebSocketSubsystem::SendPlayerState(const FZeroZoneNetworkPlayerSt
 	}
 }
 
-void UZeroZoneWebSocketSubsystem::SendCombatEvent(const FString& EventType, const FString& PlayerId, const FString& TargetId, float Value)
+void UZeroZoneWebSocketSubsystem::SendCombatEvent(const FString& EventType, const FString& PlayerId, const FString& TargetId, float Value, const FString& WeaponId, const FString& HitZone)
 {
 	if (!IsConnected())
 	{
@@ -117,6 +121,8 @@ void UZeroZoneWebSocketSubsystem::SendCombatEvent(const FString& EventType, cons
 	RootObj->SetStringField(TEXT("playerId"), PlayerId);
 	RootObj->SetStringField(TEXT("targetId"), TargetId);
 	RootObj->SetNumberField(TEXT("value"), Value);
+	RootObj->SetStringField(TEXT("weapon"), WeaponId);
+	RootObj->SetStringField(TEXT("hitZone"), HitZone);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
@@ -203,6 +209,26 @@ void UZeroZoneWebSocketSubsystem::HandleMessage(const FString& Message)
 		State.Shield = static_cast<float>(JsonObj->GetNumberField(TEXT("shield")));
 		State.bIsFiring = JsonObj->GetBoolField(TEXT("isFiring"));
 		State.bIsAbilityActive = JsonObj->GetBoolField(TEXT("isAbilityActive"));
+		FString WeaponIdStr;
+		if (JsonObj->TryGetStringField(TEXT("weaponId"), WeaponIdStr) || JsonObj->TryGetStringField(TEXT("weapon"), WeaponIdStr))
+		{
+			State.WeaponId = WeaponIdStr;
+		}
+		bool bADSVal = false;
+		if (JsonObj->TryGetBoolField(TEXT("isADS"), bADSVal))
+		{
+			State.bIsADS = bADSVal;
+		}
+		bool bCrouchVal = false;
+		if (JsonObj->TryGetBoolField(TEXT("isCrouching"), bCrouchVal))
+		{
+			State.bIsCrouching = bCrouchVal;
+		}
+		double LeanVal = 0.0;
+		if (JsonObj->TryGetNumberField(TEXT("leanAngle"), LeanVal))
+		{
+			State.LeanAngle = static_cast<float>(LeanVal);
+		}
 
 		OnRemotePlayerStateUpdated.Broadcast(State);
 	}
