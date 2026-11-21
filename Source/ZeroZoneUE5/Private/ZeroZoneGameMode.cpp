@@ -1,13 +1,16 @@
 // Copyright Zero-Zone. All Rights Reserved.
 
 #include "ZeroZoneGameMode.h"
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerState.h"
 #include "TimerManager.h"
 #include "ZeroZoneArenaGameState.h"
 #include "ZeroZoneCharacter.h"
 #include "ZeroZoneHUD.h"
+#include "ZeroZoneMatchmakingSubsystem.h"
 #include "ZeroZonePlayerController.h"
+#include "ZeroZoneWebSocketSubsystem.h"
 
 AZeroZoneGameMode::AZeroZoneGameMode()
 {
@@ -20,6 +23,35 @@ AZeroZoneGameMode::AZeroZoneGameMode()
 void AZeroZoneGameMode::StartPlay()
 {
 	Super::StartPlay();
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UZeroZoneMatchmakingSubsystem* MM = GI->GetSubsystem<UZeroZoneMatchmakingSubsystem>())
+		{
+			MM->OnMatchFound.AddUniqueDynamic(this, &AZeroZoneGameMode::HandleMatchFound);
+		}
+	}
+
+	StartMatch();
+}
+
+void AZeroZoneGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	GetWorldTimerManager().ClearTimer(MatchTimerHandle);
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UZeroZoneMatchmakingSubsystem* MM = GI->GetSubsystem<UZeroZoneMatchmakingSubsystem>())
+		{
+			MM->OnMatchFound.RemoveDynamic(this, &AZeroZoneGameMode::HandleMatchFound);
+		}
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AZeroZoneGameMode::HandleMatchFound(const FZeroZoneRoomInfo& MatchRoom)
+{
 	StartMatch();
 }
 
@@ -29,6 +61,19 @@ void AZeroZoneGameMode::StartMatch()
 	{
 		GS->SetMatchTimeRemaining(DefaultMatchDuration);
 		GS->SetMatchPhase(EZeroZoneMatchPhase::InProgress);
+	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UZeroZoneWebSocketSubsystem* WS = GI->GetSubsystem<UZeroZoneWebSocketSubsystem>())
+		{
+			if (WS->IsConnected())
+			{
+				const UZeroZoneMatchmakingSubsystem* MM = GI->GetSubsystem<UZeroZoneMatchmakingSubsystem>();
+				const FString RoomId = MM ? MM->GetCurrentRoom().RoomId : TEXT("alpha");
+				WS->SendCombatEvent(TEXT("match_start"), TEXT("server"), RoomId, DefaultMatchDuration);
+			}
+		}
 	}
 
 	GetWorldTimerManager().SetTimer(
@@ -47,6 +92,17 @@ void AZeroZoneGameMode::EndMatch()
 	if (AZeroZoneArenaGameState* GS = GetGameState<AZeroZoneArenaGameState>())
 	{
 		GS->SetMatchPhase(EZeroZoneMatchPhase::PostMatch);
+	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UZeroZoneWebSocketSubsystem* WS = GI->GetSubsystem<UZeroZoneWebSocketSubsystem>())
+		{
+			if (WS->IsConnected())
+			{
+				WS->SendCombatEvent(TEXT("match_over"), TEXT("server"), TEXT(""), 0.f);
+			}
+		}
 	}
 }
 
@@ -80,6 +136,17 @@ void AZeroZoneGameMode::RecordElimination(AController* KillerController, AContro
 
 	GS->AddTeamScore(KillerTeamIndex, PointsPerElimination);
 	GS->MulticastBroadcastKillFeed(KillerName, VictimName, WeaponName, bIsHeadshot);
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UZeroZoneWebSocketSubsystem* WS = GI->GetSubsystem<UZeroZoneWebSocketSubsystem>())
+		{
+			if (WS->IsConnected())
+			{
+				WS->SendCombatEvent(TEXT("hit_player"), KillerName, VictimName, static_cast<float>(PointsPerElimination));
+			}
+		}
+	}
 }
 
 void AZeroZoneGameMode::RespawnPlayer(AController* Controller, EZeroZoneOperatorClass OperatorClass)

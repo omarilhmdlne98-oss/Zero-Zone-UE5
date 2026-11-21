@@ -16,6 +16,7 @@ public:
 	AZeroZoneGameMode();
 
 	virtual void StartPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, Category = "ZeroZone|GameMode")
 	void StartMatch();
@@ -31,6 +32,9 @@ public:
 
 protected:
 	void TickMatchTimer();
+
+	UFUNCTION()
+	void HandleMatchFound(const FZeroZoneRoomInfo& MatchRoom);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ZeroZone|Match")
