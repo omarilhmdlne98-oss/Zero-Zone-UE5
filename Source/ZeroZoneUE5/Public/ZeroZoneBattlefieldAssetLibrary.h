@@ -167,7 +167,11 @@ enum class EZeroZoneSinaiZoneKind : uint8
 	SandBermRamp		UMETA(DisplayName = "Sand Berm Assault Ramp"),
 	BarLevBunker		UMETA(DisplayName = "Desert Concrete Bunker"),
 	CommandRelay		UMETA(DisplayName = "Central Canal Command Relay"),
-	TrenchBarricade		UMETA(DisplayName = "Trench & Sandbag Barricade")
+	TrenchBarricade		UMETA(DisplayName = "Trench & Sandbag Barricade"),
+	OasisPalmCluster	UMETA(DisplayName = "West Bank Oasis Date Palms"),
+	AntiTankHedgehogLine UMETA(DisplayName = "Czech Hedgehog Anti-Tank Line"),
+	BunkerCamoCanopy	UMETA(DisplayName = "Bar-Lev Camo Netting Canopy"),
+	LimestoneOutcrop	UMETA(DisplayName = "Sinai Limestone Rocky Outcrop")
 };
 
 USTRUCT(BlueprintType)

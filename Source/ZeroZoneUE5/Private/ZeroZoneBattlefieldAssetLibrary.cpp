@@ -69,6 +69,94 @@ TArray<FZeroZoneBattlefieldPBRPreset> UZeroZoneBattlefieldAssetLibrary::GetBattl
 		P.RimStrength = 0.45f;
 		Presets.Add(P);
 	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("sinai_sand");
+		P.DisplayName = TEXT("Sinai Wind-Rippled Desert Sand");
+		P.BaseColor = FLinearColor(0.85f, 0.73f, 0.52f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.96f, 0.87f, 0.70f, 1.f);
+		P.Roughness = 0.92f;
+		P.Metallic = 0.02f;
+		P.RimStrength = 0.12f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("berm_earth");
+		P.DisplayName = TEXT("Compacted East Bank Berm Earth");
+		P.BaseColor = FLinearColor(0.76f, 0.61f, 0.38f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.91f, 0.77f, 0.53f, 1.f);
+		P.Roughness = 0.94f;
+		P.Metallic = 0.02f;
+		P.RimStrength = 0.10f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("desert_concrete");
+		P.DisplayName = TEXT("Bar-Lev Reinforced Desert Concrete");
+		P.BaseColor = FLinearColor(0.72f, 0.65f, 0.55f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.94f, 0.87f, 0.75f, 1.f);
+		P.Roughness = 0.86f;
+		P.Metallic = 0.08f;
+		P.RimStrength = 0.15f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("pontoon_steel");
+		P.DisplayName = TEXT("Olive Tactical Pontoon Steel");
+		P.BaseColor = FLinearColor(0.37f, 0.41f, 0.32f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.89f, 0.78f, 0.58f, 1.f);
+		P.Roughness = 0.46f;
+		P.Metallic = 0.68f;
+		P.RimStrength = 0.24f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("suez_water");
+		P.DisplayName = TEXT("Suez Canal Flowing Water");
+		P.BaseColor = FLinearColor(0.11f, 0.39f, 0.44f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.49f, 0.83f, 0.99f, 1.f);
+		P.Roughness = 0.14f;
+		P.Metallic = 0.25f;
+		P.RimStrength = 0.42f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("sinai_limestone");
+		P.DisplayName = TEXT("Weathered Sinai Limestone Rock");
+		P.BaseColor = FLinearColor(0.66f, 0.56f, 0.42f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.91f, 0.81f, 0.64f, 1.f);
+		P.Roughness = 0.88f;
+		P.Metallic = 0.04f;
+		P.RimStrength = 0.16f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("oasis_palm_foliage");
+		P.DisplayName = TEXT("West Bank Oasis Date Palm Foliage");
+		P.BaseColor = FLinearColor(0.30f, 0.42f, 0.24f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.64f, 0.90f, 0.21f, 1.f);
+		P.Roughness = 0.78f;
+		P.Metallic = 0.02f;
+		P.RimStrength = 0.18f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("desert_camo_net");
+		P.DisplayName = TEXT("Bar-Lev Desert Camouflage Netting");
+		P.BaseColor = FLinearColor(0.61f, 0.52f, 0.35f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.84f, 0.75f, 0.57f, 1.f);
+		P.Roughness = 0.90f;
+		P.Metallic = 0.02f;
+		P.RimStrength = 0.12f;
+		Presets.Add(P);
+	}
 
 	return Presets;
 }
@@ -310,11 +398,11 @@ TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinai
 		Specs.Add(S);
 	};
 
-	// 400m x 400m Open-World Sinai Desert Heightfield & 16m-Wide Suez Canal Water Channel (40000cm x 1600cm)
-	AddSpec(TEXT("sinai_open_world_terrain"), TEXT("Sinai 400m x 400m Procedural fBm Desert Terrain"), EZeroZoneSinaiZoneKind::SandBermRampart,
+	// 400m x 400m Open-World Sinai Desert Heightfield & 16m-Wide Animated Suez Canal Water Channel (40000cm x 1640cm)
+	AddSpec(TEXT("sinai_open_world_terrain"), TEXT("Sinai 400m x 400m Slope-Blended Wind-Rippled Terrain"), EZeroZoneSinaiZoneKind::SandBermRampart,
 		FVector(0.f, 0.f, 0.f), FVector(40000.f, 40000.f, 1800.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
-	AddSpec(TEXT("suez_canal_channel"), TEXT("Wide Suez Canal Water Channel (16m)"), EZeroZoneSinaiZoneKind::SuezCanalChannel,
-		FVector(0.f, 0.f, -135.f), FVector(40000.f, 1600.f, 135.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
+	AddSpec(TEXT("suez_canal_channel"), TEXT("Animated Dual-Normal Suez Canal Water Channel (16m)"), EZeroZoneSinaiZoneKind::SuezCanalChannel,
+		FVector(0.f, 0.f, -35.f), FVector(40000.f, 1640.f, 100.f), FRotator::ZeroRotator, TEXT("suez_water"));
 	AddSpec(TEXT("east_bank_command_vault"), TEXT("East Bank Command Relay Vault Plaza"), EZeroZoneSinaiZoneKind::CommandRelay,
 		FVector(0.f, -1450.f, 0.f), FVector(460.f, 460.f, 452.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
 
@@ -359,6 +447,16 @@ TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinai
 		FVector(4200.f, 3600.f, 280.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
 	AddSpec(TEXT("bunker_wb_stage"), TEXT("Desert Staging Hill Bunker (West Bank South)"), EZeroZoneSinaiZoneKind::BarLevBunker,
 		FVector(0.f, 6600.f, 340.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+
+	// Instanced Sinai Battlefield Realism Batches (Date Palm Oasis, Czech Hedgehogs, Camo Canopies, Limestone Outcrops)
+	AddSpec(TEXT("oasis_palm_west_bank"), TEXT("West Bank Canal Oasis Date Palm Line (x14 Instanced)"), EZeroZoneSinaiZoneKind::OasisPalmCluster,
+		FVector(0.f, 1500.f, 0.f), FVector(12400.f, 3200.f, 520.f), FRotator::ZeroRotator, TEXT("oasis_palm_foliage"));
+	AddSpec(TEXT("hedgehog_antitank_line"), TEXT("East Bank Berm Czech Hedgehog Anti-Tank Line (x14 Instanced)"), EZeroZoneSinaiZoneKind::AntiTankHedgehogLine,
+		FVector(0.f, -1500.f, 54.f), FVector(7600.f, 800.f, 155.f), FRotator::ZeroRotator, TEXT("brushed_steel"));
+	AddSpec(TEXT("bunker_camo_canopies"), TEXT("Bar-Lev Bunker Desert Camo Netting Canopies (x6 Instanced)"), EZeroZoneSinaiZoneKind::BunkerCamoCanopy,
+		FVector(0.f, -3600.f, 625.f), FVector(620.f, 480.f, 8.f), FRotator::ZeroRotator, TEXT("desert_camo_net"));
+	AddSpec(TEXT("sinai_limestone_outcrops"), TEXT("Weathered Sinai Limestone Rocky Outcrops (x16 Instanced)"), EZeroZoneSinaiZoneKind::LimestoneOutcrop,
+		FVector(0.f, 0.f, 180.f), FVector(17600.f, 15000.f, 360.f), FRotator::ZeroRotator, TEXT("sinai_limestone"));
 
 	return Specs;
 }
