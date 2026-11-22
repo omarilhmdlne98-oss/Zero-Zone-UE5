@@ -259,7 +259,8 @@ TArray<FZeroZoneWeaponAttachmentSpec> UZeroZoneBattlefieldAssetLibrary::GetWeapo
 TArray<FZeroZoneExplosiveBarrelSpec> UZeroZoneBattlefieldAssetLibrary::GetExplosiveBarrelSpecs()
 {
 	TArray<FZeroZoneExplosiveBarrelSpec> Barrels;
-	constexpr float UpperDeckZ = 420.f;
+	constexpr float UpperDeckZ = 450.f;
+	constexpr float PontoonZ = 45.f;
 
 	auto AddBarrel = [&Barrels](const TCHAR* Id, float X, float Y, float Z)
 	{
@@ -273,17 +274,19 @@ TArray<FZeroZoneExplosiveBarrelSpec> UZeroZoneBattlefieldAssetLibrary::GetExplos
 		Barrels.Add(Spec);
 	};
 
-	// 4 Suez Canal Pontoon Bridge & East Bank Berm Breach choke-point barrels (cm)
-	AddBarrel(TEXT("barrel_pontoon_w"), -950.f, 0.f, 42.f);
-	AddBarrel(TEXT("barrel_pontoon_e"), 950.f, 0.f, 42.f);
-	AddBarrel(TEXT("barrel_breach_w"), -950.f, -1050.f, 0.f);
-	AddBarrel(TEXT("barrel_breach_e"), 950.f, -1050.f, 0.f);
+	// 3 Suez Canal Pontoon Bridge choke-point barrels (x = -2800, 0, +2800 cm)
+	AddBarrel(TEXT("barrel_pontoon_w"), -2800.f, 0.f, PontoonZ);
+	AddBarrel(TEXT("barrel_pontoon_c"), 0.f, 0.f, PontoonZ);
+	AddBarrel(TEXT("barrel_pontoon_e"), 2800.f, 0.f, PontoonZ);
 
-	// 4 Upper Sand Berm Crest & West Overlook barrels (Z = 420cm)
-	AddBarrel(TEXT("barrel_berm_nw"), -1680.f, -1350.f, UpperDeckZ);
-	AddBarrel(TEXT("barrel_berm_ne"), 1680.f, -1350.f, UpperDeckZ);
-	AddBarrel(TEXT("barrel_berm_c"), 0.f, -1350.f, UpperDeckZ);
-	AddBarrel(TEXT("barrel_west_overlook"), 0.f, 1950.f, UpperDeckZ);
+	// 2 East Bank Sand Berm Breach assault corridor barrels
+	AddBarrel(TEXT("barrel_breach_w"), -2800.f, -1800.f, 0.f);
+	AddBarrel(TEXT("barrel_breach_e"), 2800.f, -1800.f, 0.f);
+
+	// 3 Upper Sand Berm Crest & Strategic Bunker Hill barrels
+	AddBarrel(TEXT("barrel_berm_nw"), -1400.f, -2200.f, UpperDeckZ);
+	AddBarrel(TEXT("barrel_berm_ne"), 1400.f, -2200.f, UpperDeckZ);
+	AddBarrel(TEXT("barrel_hill_cmd"), 0.f, -6150.f, 380.f);
 
 	return Barrels;
 }
@@ -291,8 +294,8 @@ TArray<FZeroZoneExplosiveBarrelSpec> UZeroZoneBattlefieldAssetLibrary::GetExplos
 TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinaiBattlefieldSpecs()
 {
 	TArray<FZeroZoneSinaiBattlefieldSpec> Specs;
-	constexpr float BermTopZ = 420.f;
-	constexpr float PontoonZ = 42.f;
+	constexpr float BermTopZ = 450.f;
+	constexpr float PontoonZ = 45.f;
 
 	auto AddSpec = [&Specs](const TCHAR* Id, const TCHAR* Name, EZeroZoneSinaiZoneKind Kind, FVector Loc, FVector Dim, FRotator Rot, const TCHAR* MatId)
 	{
@@ -307,49 +310,55 @@ TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinai
 		Specs.Add(S);
 	};
 
-	// Central Suez Canal Water Channel & Command Relay Causeway Island
-	AddSpec(TEXT("suez_canal_channel"), TEXT("Suez Canal Water Channel"), EZeroZoneSinaiZoneKind::SuezCanalChannel,
-		FVector(0.f, 0.f, -52.f), FVector(4800.f, 900.f, 52.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
-	AddSpec(TEXT("canal_command_relay"), TEXT("Central Canal Command Relay Vault Platform"), EZeroZoneSinaiZoneKind::CommandRelay,
-		FVector(0.f, 0.f, PontoonZ), FVector(560.f, 560.f, 42.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
+	// 400m x 400m Open-World Sinai Desert Heightfield & 16m-Wide Suez Canal Water Channel (40000cm x 1600cm)
+	AddSpec(TEXT("sinai_open_world_terrain"), TEXT("Sinai 400m x 400m Procedural fBm Desert Terrain"), EZeroZoneSinaiZoneKind::SandBermRampart,
+		FVector(0.f, 0.f, 0.f), FVector(40000.f, 40000.f, 1800.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
+	AddSpec(TEXT("suez_canal_channel"), TEXT("Wide Suez Canal Water Channel (16m)"), EZeroZoneSinaiZoneKind::SuezCanalChannel,
+		FVector(0.f, 0.f, -135.f), FVector(40000.f, 1600.f, 135.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
+	AddSpec(TEXT("east_bank_command_vault"), TEXT("East Bank Command Relay Vault Plaza"), EZeroZoneSinaiZoneKind::CommandRelay,
+		FVector(0.f, -1450.f, 0.f), FVector(460.f, 460.f, 452.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
 
-	// 2 Tactical Pontoon Bridges + Causeway Links
-	AddSpec(TEXT("pontoon_bridge_w"), TEXT("West Tactical Pontoon Bridge"), EZeroZoneSinaiZoneKind::PontoonBridge,
-		FVector(-950.f, 0.f, PontoonZ), FVector(420.f, 1020.f, 24.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
-	AddSpec(TEXT("pontoon_bridge_e"), TEXT("East Tactical Pontoon Bridge"), EZeroZoneSinaiZoneKind::PontoonBridge,
-		FVector(950.f, 0.f, PontoonZ), FVector(420.f, 1020.f, 24.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
-	AddSpec(TEXT("canal_causeway_w"), TEXT("West Relay Causeway"), EZeroZoneSinaiZoneKind::PontoonBridge,
-		FVector(-510.f, 0.f, PontoonZ), FVector(480.f, 260.f, 24.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
-	AddSpec(TEXT("canal_causeway_e"), TEXT("East Relay Causeway"), EZeroZoneSinaiZoneKind::PontoonBridge,
-		FVector(510.f, 0.f, PontoonZ), FVector(480.f, 260.f, 24.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
+	// 3 Wide Tactical Pontoon Bridges (West x=-28m, Center x=0m, East x=+28m)
+	AddSpec(TEXT("pontoon_bridge_west"), TEXT("West Tactical Pontoon Bridge"), EZeroZoneSinaiZoneKind::PontoonBridge,
+		FVector(-2800.f, 0.f, PontoonZ), FVector(460.f, 1760.f, 26.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
+	AddSpec(TEXT("pontoon_bridge_center"), TEXT("Center Tactical Pontoon Bridge"), EZeroZoneSinaiZoneKind::PontoonBridge,
+		FVector(0.f, 0.f, PontoonZ), FVector(520.f, 1760.f, 26.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
+	AddSpec(TEXT("pontoon_bridge_east"), TEXT("East Tactical Pontoon Bridge"), EZeroZoneSinaiZoneKind::PontoonBridge,
+		FVector(2800.f, 0.f, PontoonZ), FVector(460.f, 1760.f, 26.f), FRotator::ZeroRotator, TEXT("pontoon_steel"));
 
-	// East Bank Sand Berm Rampart (3 compacted earth spans leaving 2 breached assault corridors)
-	AddSpec(TEXT("berm_crest_w"), TEXT("East Bank Sand Berm (West Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
-		FVector(-1680.f, -1350.f, BermTopZ), FVector(880.f, 320.f, 420.f), FRotator::ZeroRotator, TEXT("berm_earth"));
-	AddSpec(TEXT("berm_crest_c"), TEXT("East Bank Sand Berm (Center Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
-		FVector(0.f, -1350.f, BermTopZ), FVector(1360.f, 320.f, 420.f), FRotator::ZeroRotator, TEXT("berm_earth"));
-	AddSpec(TEXT("berm_crest_e"), TEXT("East Bank Sand Berm (East Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
-		FVector(1680.f, -1350.f, BermTopZ), FVector(880.f, 320.f, 420.f), FRotator::ZeroRotator, TEXT("berm_earth"));
+	// East Bank Sand Berm Rampart (4 compacted earth spans across 116m leaving 3 hydro-breached assault corridors)
+	AddSpec(TEXT("berm_crest_far_w"), TEXT("East Bank Sand Berm (Far West Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
+		FVector(-4600.f, -2200.f, BermTopZ), FVector(2400.f, 380.f, 450.f), FRotator::ZeroRotator, TEXT("berm_earth"));
+	AddSpec(TEXT("berm_crest_mid_w"), TEXT("East Bank Sand Berm (Mid West Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
+		FVector(-1400.f, -2200.f, BermTopZ), FVector(1650.f, 380.f, 450.f), FRotator::ZeroRotator, TEXT("berm_earth"));
+	AddSpec(TEXT("berm_crest_mid_e"), TEXT("East Bank Sand Berm (Mid East Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
+		FVector(1400.f, -2200.f, BermTopZ), FVector(1650.f, 380.f, 450.f), FRotator::ZeroRotator, TEXT("berm_earth"));
+	AddSpec(TEXT("berm_crest_far_e"), TEXT("East Bank Sand Berm (Far East Span)"), EZeroZoneSinaiZoneKind::SandBermRampart,
+		FVector(4600.f, -2200.f, BermTopZ), FVector(2400.f, 380.f, 450.f), FRotator::ZeroRotator, TEXT("berm_earth"));
 
-	// 4 Smooth Walkable 21.61-deg Access Ramps (2 East Berm flanks + 2 West Bank overlook flanks)
-	AddSpec(TEXT("east_berm_ramp_w"), TEXT("East Berm Flank Assault Ramp (West)"), EZeroZoneSinaiZoneKind::SandBermRamp,
-		FVector(-1950.f, -820.f, BermTopZ * 0.5f), FVector(280.f, 1140.2f, 26.f), FRotator(21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
-	AddSpec(TEXT("east_berm_ramp_e"), TEXT("East Berm Flank Assault Ramp (East)"), EZeroZoneSinaiZoneKind::SandBermRamp,
-		FVector(1950.f, -820.f, BermTopZ * 0.5f), FVector(280.f, 1140.2f, 26.f), FRotator(21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
-	AddSpec(TEXT("west_bank_ramp_w"), TEXT("West Bank Overlook Ramp (West)"), EZeroZoneSinaiZoneKind::SandBermRamp,
-		FVector(-1950.f, 1220.f, BermTopZ * 0.5f), FVector(280.f, 1140.2f, 26.f), FRotator(-21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
-	AddSpec(TEXT("west_bank_ramp_e"), TEXT("West Bank Overlook Ramp (East)"), EZeroZoneSinaiZoneKind::SandBermRamp,
-		FVector(1950.f, 1220.f, BermTopZ * 0.5f), FVector(280.f, 1140.2f, 26.f), FRotator(-21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
+	// 4 Smooth Walkable 21.61-deg Berm Assault Ramps
+	AddSpec(TEXT("berm_ramp_inner_w"), TEXT("East Berm Inner Assault Ramp (West)"), EZeroZoneSinaiZoneKind::SandBermRamp,
+		FVector(-1400.f, -2920.f, BermTopZ * 0.5f), FVector(320.f, 1220.f, 28.f), FRotator(-21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSpec(TEXT("berm_ramp_inner_e"), TEXT("East Berm Inner Assault Ramp (East)"), EZeroZoneSinaiZoneKind::SandBermRamp,
+		FVector(1400.f, -2920.f, BermTopZ * 0.5f), FVector(320.f, 1220.f, 28.f), FRotator(-21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSpec(TEXT("berm_ramp_outer_w"), TEXT("East Berm Outer Flank Ramp (West)"), EZeroZoneSinaiZoneKind::SandBermRamp,
+		FVector(-5800.f, -1480.f, BermTopZ * 0.5f), FVector(320.f, 1220.f, 28.f), FRotator(21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSpec(TEXT("berm_ramp_outer_e"), TEXT("East Berm Outer Flank Ramp (East)"), EZeroZoneSinaiZoneKind::SandBermRamp,
+		FVector(5800.f, -1480.f, BermTopZ * 0.5f), FVector(320.f, 1220.f, 28.f), FRotator(21.61f, 0.f, 0.f), TEXT("catwalk_grate"));
 
-	// 4 Reinforced Bar-Lev Desert Concrete Bunkers with Firing Slits
-	AddSpec(TEXT("bunker_east_w"), TEXT("Bar-Lev Concrete Bunker (East Bank West)"), EZeroZoneSinaiZoneKind::BarLevBunker,
-		FVector(-1480.f, -900.f, 0.f), FVector(480.f, 340.f, 236.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
-	AddSpec(TEXT("bunker_east_e"), TEXT("Bar-Lev Concrete Bunker (East Bank East)"), EZeroZoneSinaiZoneKind::BarLevBunker,
-		FVector(1480.f, -900.f, 0.f), FVector(480.f, 340.f, 236.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
-	AddSpec(TEXT("bunker_west_w"), TEXT("Desert Concrete Bunker (West Bank West)"), EZeroZoneSinaiZoneKind::BarLevBunker,
-		FVector(-1480.f, 1020.f, 0.f), FVector(480.f, 340.f, 236.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
-	AddSpec(TEXT("bunker_west_e"), TEXT("Desert Concrete Bunker (West Bank East)"), EZeroZoneSinaiZoneKind::BarLevBunker,
-		FVector(1480.f, 1020.f, 0.f), FVector(480.f, 340.f, 236.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	// 6 Reinforced Bar-Lev Desert Concrete Bunkers on Strategic Open-World Hills (+-90m combat zone)
+	AddSpec(TEXT("bunker_eb_west"), TEXT("Bar-Lev Hill Bunker (East Bank West)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(-4200.f, -3600.f, 320.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("bunker_eb_east"), TEXT("Bar-Lev Hill Bunker (East Bank East)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(4200.f, -3600.f, 320.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("bunker_eb_cmd"), TEXT("Bar-Lev Command Hill Bunker (East Bank North)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(0.f, -6400.f, 380.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("bunker_wb_west"), TEXT("Desert Hill Bunker (West Bank West)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(-4200.f, 3600.f, 280.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("bunker_wb_east"), TEXT("Desert Hill Bunker (West Bank East)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(4200.f, 3600.f, 280.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("bunker_wb_stage"), TEXT("Desert Staging Hill Bunker (West Bank South)"), EZeroZoneSinaiZoneKind::BarLevBunker,
+		FVector(0.f, 6600.f, 340.f), FVector(520.f, 380.f, 240.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
 
 	return Specs;
 }
