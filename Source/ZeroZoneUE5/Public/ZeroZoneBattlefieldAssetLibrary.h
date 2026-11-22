@@ -158,6 +158,45 @@ struct FZeroZoneExplosiveBarrelSpec
 	float RespawnDelaySeconds = 25.f;
 };
 
+UENUM(BlueprintType)
+enum class EZeroZoneSinaiZoneKind : uint8
+{
+	SuezCanalChannel	UMETA(DisplayName = "Suez Canal Water Channel"),
+	PontoonBridge		UMETA(DisplayName = "Tactical Pontoon Bridge"),
+	SandBermRampart		UMETA(DisplayName = "East Bank Sand Berm Rampart"),
+	SandBermRamp		UMETA(DisplayName = "Sand Berm Assault Ramp"),
+	BarLevBunker		UMETA(DisplayName = "Desert Concrete Bunker"),
+	CommandRelay		UMETA(DisplayName = "Central Canal Command Relay"),
+	TrenchBarricade		UMETA(DisplayName = "Trench & Sandbag Barricade")
+};
+
+USTRUCT(BlueprintType)
+struct FZeroZoneSinaiBattlefieldSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString SegmentId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	EZeroZoneSinaiZoneKind ZoneKind = EZeroZoneSinaiZoneKind::PontoonBridge;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FVector LocationCm = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FVector DimensionsCm = FVector(420.f, 1020.f, 24.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FRotator RotationDeg = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString MaterialPresetId = TEXT("pontoon_steel");
+};
+
 UCLASS()
 class ZEROZONEUE5_API UZeroZoneBattlefieldAssetLibrary : public UBlueprintFunctionLibrary
 {
@@ -184,4 +223,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
 	static TArray<FZeroZoneExplosiveBarrelSpec> GetExplosiveBarrelSpecs();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
+	static TArray<FZeroZoneSinaiBattlefieldSpec> GetSinaiBattlefieldSpecs();
 };
