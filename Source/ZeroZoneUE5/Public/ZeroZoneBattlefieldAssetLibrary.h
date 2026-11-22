@@ -205,6 +205,70 @@ struct FZeroZoneSinaiBattlefieldSpec
 	FString MaterialPresetId = TEXT("pontoon_steel");
 };
 
+UENUM(BlueprintType)
+enum class EZeroZoneKillstreakKind : uint8
+{
+	UavReconPulse		UMETA(DisplayName = "UAV Recon Radar Pulse"),
+	ArtilleryBarrage155	UMETA(DisplayName = "155mm Sinai Artillery Barrage")
+};
+
+USTRUCT(BlueprintType)
+struct FZeroZoneTacticalKillstreakSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	FString KillstreakId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	FString DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	EZeroZoneKillstreakKind Kind = EZeroZoneKillstreakKind::UavReconPulse;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	FString HotkeyLabel = TEXT("[4]");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	float CooldownSeconds = 22.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	float ActiveDurationSeconds = 12.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	float BlastRadiusCm = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	float MaxSplashDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	int32 ShellCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Killstreaks")
+	float KoCooldownRefundSeconds = 6.f;
+};
+
+USTRUCT(BlueprintType)
+struct FZeroZoneMinimapRadarSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Radar")
+	float RadarRangeCm = 7400.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Radar")
+	float PassiveDetectRangeCm = 3400.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Radar")
+	float CanalHalfWidthCm = 800.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Radar")
+	float EastBermOffsetYCm = -2200.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Radar")
+	bool bShowExplosiveBarrels = true;
+};
+
 UCLASS()
 class ZEROZONEUE5_API UZeroZoneBattlefieldAssetLibrary : public UBlueprintFunctionLibrary
 {
@@ -234,4 +298,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
 	static TArray<FZeroZoneSinaiBattlefieldSpec> GetSinaiBattlefieldSpecs();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
+	static TArray<FZeroZoneTacticalKillstreakSpec> GetTacticalKillstreakSpecs();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
+	static FZeroZoneMinimapRadarSpec GetMinimapRadarSpec();
 };

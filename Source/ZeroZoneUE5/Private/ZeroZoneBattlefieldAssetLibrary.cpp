@@ -510,3 +510,51 @@ TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinai
 
 	return Specs;
 }
+
+TArray<FZeroZoneTacticalKillstreakSpec> UZeroZoneBattlefieldAssetLibrary::GetTacticalKillstreakSpecs()
+{
+	TArray<FZeroZoneTacticalKillstreakSpec> Streaks;
+	Streaks.Reserve(2);
+
+	{
+		FZeroZoneTacticalKillstreakSpec Uav;
+		Uav.KillstreakId = TEXT("sinai_uav_recon");
+		Uav.DisplayName = TEXT("UAV Recon Radar Pulse");
+		Uav.Kind = EZeroZoneKillstreakKind::UavReconPulse;
+		Uav.HotkeyLabel = TEXT("[4]");
+		Uav.CooldownSeconds = 22.f;
+		Uav.ActiveDurationSeconds = 12.f;
+		Uav.BlastRadiusCm = 0.f;
+		Uav.MaxSplashDamage = 0.f;
+		Uav.ShellCount = 0;
+		Uav.KoCooldownRefundSeconds = 6.f;
+		Streaks.Add(Uav);
+	}
+	{
+		FZeroZoneTacticalKillstreakSpec Arty;
+		Arty.KillstreakId = TEXT("sinai_artillery_155");
+		Arty.DisplayName = TEXT("155mm Sinai Artillery Barrage");
+		Arty.Kind = EZeroZoneKillstreakKind::ArtilleryBarrage155;
+		Arty.HotkeyLabel = TEXT("[5]");
+		Arty.CooldownSeconds = 28.f;
+		Arty.ActiveDurationSeconds = 4.5f;
+		Arty.BlastRadiusCm = 850.f;
+		Arty.MaxSplashDamage = 115.f;
+		Arty.ShellCount = 5;
+		Arty.KoCooldownRefundSeconds = 6.f;
+		Streaks.Add(Arty);
+	}
+
+	return Streaks;
+}
+
+FZeroZoneMinimapRadarSpec UZeroZoneBattlefieldAssetLibrary::GetMinimapRadarSpec()
+{
+	FZeroZoneMinimapRadarSpec Spec;
+	Spec.RadarRangeCm = 7400.f;
+	Spec.PassiveDetectRangeCm = 3400.f;
+	Spec.CanalHalfWidthCm = 800.f;
+	Spec.EastBermOffsetYCm = -2200.f;
+	Spec.bShowExplosiveBarrels = true;
+	return Spec;
+}
