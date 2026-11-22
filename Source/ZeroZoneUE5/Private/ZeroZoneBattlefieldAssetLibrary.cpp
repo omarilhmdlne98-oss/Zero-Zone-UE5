@@ -589,3 +589,16 @@ TArray<FZeroZoneSinaiAtmospherePreset> UZeroZoneBattlefieldAssetLibrary::GetSina
 
 	return Presets;
 }
+
+FZeroZoneGpsSectorMetadata UZeroZoneBattlefieldAssetLibrary::GetSinaiGpsSectorMetadata()
+{
+	FZeroZoneGpsSectorMetadata Meta;
+	Meta.SectorName = TEXT("Suez Canal / Deversoir-Sinai (30.5800N, 32.2700E)");
+	Meta.LatitudeDeg = 30.5800;
+	Meta.LongitudeDeg = 32.2700;
+	Meta.DemGridSize = 128;
+	Meta.MinElevationM = 0.f;
+	Meta.MaxElevationM = 12.25f;
+	Meta.DataSource = TEXT("aws-terrarium-z13-x4830-y3364");
+	return Meta;
+}

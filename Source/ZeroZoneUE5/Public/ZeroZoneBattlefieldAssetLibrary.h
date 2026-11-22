@@ -308,6 +308,33 @@ struct FZeroZoneSinaiAtmospherePreset
 	float FogDensity = 0.0042f;
 };
 
+USTRUCT(BlueprintType)
+struct FZeroZoneGpsSectorMetadata
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString SectorName = TEXT("Suez Canal / Deversoir-Sinai");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	double LatitudeDeg = 30.5800;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	double LongitudeDeg = 32.2700;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	int32 DemGridSize = 128;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	float MinElevationM = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	float MaxElevationM = 12.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString DataSource = TEXT("aws-terrarium-z13-x4830-y3364");
+};
+
 UCLASS()
 class ZEROZONEUE5_API UZeroZoneBattlefieldAssetLibrary : public UBlueprintFunctionLibrary
 {
@@ -346,4 +373,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
 	static TArray<FZeroZoneSinaiAtmospherePreset> GetSinaiAtmospherePresets();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
+	static FZeroZoneGpsSectorMetadata GetSinaiGpsSectorMetadata();
 };
