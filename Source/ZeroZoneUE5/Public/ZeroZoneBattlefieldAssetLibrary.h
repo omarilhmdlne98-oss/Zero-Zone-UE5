@@ -171,7 +171,11 @@ enum class EZeroZoneSinaiZoneKind : uint8
 	OasisPalmCluster	UMETA(DisplayName = "West Bank Oasis Date Palms"),
 	AntiTankHedgehogLine UMETA(DisplayName = "Czech Hedgehog Anti-Tank Line"),
 	BunkerCamoCanopy	UMETA(DisplayName = "Bar-Lev Camo Netting Canopy"),
-	LimestoneOutcrop	UMETA(DisplayName = "Sinai Limestone Rocky Outcrop")
+	LimestoneOutcrop	UMETA(DisplayName = "Sinai Limestone Rocky Outcrop"),
+	CharredTankWreck	UMETA(DisplayName = "Charred 1973 Tank Hull Wreck"),
+	DragonsTeethLine	UMETA(DisplayName = "Concrete Dragons Teeth Tank Traps"),
+	FieldSupplyDepot	UMETA(DisplayName = "Military Field Tent & Supply Depot"),
+	ArtilleryShellCrater UMETA(DisplayName = "Scorched Artillery Shell Crater")
 };
 
 USTRUCT(BlueprintType)

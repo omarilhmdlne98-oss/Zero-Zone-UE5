@@ -157,6 +157,28 @@ TArray<FZeroZoneBattlefieldPBRPreset> UZeroZoneBattlefieldAssetLibrary::GetBattl
 		P.RimStrength = 0.12f;
 		Presets.Add(P);
 	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("charred_tank_armor");
+		P.DisplayName = TEXT("Charred 1973 Sinai Tank Hull Steel");
+		P.BaseColor = FLinearColor(0.24f, 0.22f, 0.19f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.98f, 0.45f, 0.09f, 1.f);
+		P.Roughness = 0.64f;
+		P.Metallic = 0.72f;
+		P.RimStrength = 0.28f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("field_tent_canvas");
+		P.DisplayName = TEXT("Desert Olive Field Tent Canvas");
+		P.BaseColor = FLinearColor(0.54f, 0.47f, 0.33f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.90f, 0.81f, 0.64f, 1.f);
+		P.Roughness = 0.92f;
+		P.Metallic = 0.02f;
+		P.RimStrength = 0.14f;
+		Presets.Add(P);
+	}
 
 	return Presets;
 }
@@ -457,6 +479,34 @@ TArray<FZeroZoneSinaiBattlefieldSpec> UZeroZoneBattlefieldAssetLibrary::GetSinai
 		FVector(0.f, -3600.f, 625.f), FVector(620.f, 480.f, 8.f), FRotator::ZeroRotator, TEXT("desert_camo_net"));
 	AddSpec(TEXT("sinai_limestone_outcrops"), TEXT("Weathered Sinai Limestone Rocky Outcrops (x16 Instanced)"), EZeroZoneSinaiZoneKind::LimestoneOutcrop,
 		FVector(0.f, 0.f, 180.f), FVector(17600.f, 15000.f, 360.f), FRotator::ZeroRotator, TEXT("sinai_limestone"));
+
+	// 6 Disabled / Burnt 1973 Tank Hull Cover Wrecks (with 3 Rising Battlefield Smoke Plumes)
+	AddSpec(TEXT("tank_wreck_eb_breach_w"), TEXT("Charred Tank Hull Wreck (West Berm Breach + Smoke Plume)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(-2450.f, -2650.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, 21.8f, 0.f), TEXT("charred_tank_armor"));
+	AddSpec(TEXT("tank_wreck_eb_breach_c"), TEXT("Charred Tank Hull Wreck (Center Berm Breach + Smoke Plume)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(480.f, -2800.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, -25.2f, 0.f), TEXT("charred_tank_armor"));
+	AddSpec(TEXT("tank_wreck_eb_breach_e"), TEXT("Charred Tank Hull Wreck (East Berm Breach + Smoke Plume)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(2450.f, -2650.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, -18.3f, 0.f), TEXT("charred_tank_armor"));
+	AddSpec(TEXT("tank_wreck_eb_flank_w"), TEXT("Charred Tank Hull Wreck (East Bank West Flank)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(-3600.f, -1550.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, 35.5f, 0.f), TEXT("charred_tank_armor"));
+	AddSpec(TEXT("tank_wreck_eb_flank_e"), TEXT("Charred Tank Hull Wreck (East Bank East Flank)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(3600.f, -1550.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, -33.2f, 0.f), TEXT("charred_tank_armor"));
+	AddSpec(TEXT("tank_wreck_wb_center"), TEXT("Charred Tank Hull Wreck (West Bank Canal Approach)"), EZeroZoneSinaiZoneKind::CharredTankWreck,
+		FVector(-650.f, 1650.f, 95.f), FVector(320.f, 540.f, 195.f), FRotator(0.f, 12.6f, 0.f), TEXT("charred_tank_armor"));
+
+	// Reinforced Concrete Dragon's Teeth Anti-Tank Pyramid Lines & 4 Field Command Supply Depots
+	AddSpec(TEXT("dragons_teeth_flanks"), TEXT("Reinforced Concrete Dragons Teeth Tank Traps (x36 Instanced)"), EZeroZoneSinaiZoneKind::DragonsTeethLine,
+		FVector(0.f, -1835.f, 52.f), FVector(10800.f, 240.f, 115.f), FRotator::ZeroRotator, TEXT("desert_concrete"));
+	AddSpec(TEXT("depot_eb_north_w"), TEXT("East Bank Field Command Tent & Supply Depot (West)"), EZeroZoneSinaiZoneKind::FieldSupplyDepot,
+		FVector(-2200.f, -5200.f, 115.f), FVector(540.f, 380.f, 230.f), FRotator(0.f, 4.6f, 0.f), TEXT("field_tent_canvas"));
+	AddSpec(TEXT("depot_eb_north_e"), TEXT("East Bank Field Command Tent & Supply Depot (East)"), EZeroZoneSinaiZoneKind::FieldSupplyDepot,
+		FVector(2200.f, -5200.f, 115.f), FVector(540.f, 380.f, 230.f), FRotator(0.f, -4.6f, 0.f), TEXT("field_tent_canvas"));
+	AddSpec(TEXT("depot_wb_south_w"), TEXT("West Bank Field Command Tent & Supply Depot (West)"), EZeroZoneSinaiZoneKind::FieldSupplyDepot,
+		FVector(-2200.f, 4800.f, 115.f), FVector(540.f, 380.f, 230.f), FRotator(0.f, -3.4f, 0.f), TEXT("field_tent_canvas"));
+	AddSpec(TEXT("depot_wb_south_e"), TEXT("West Bank Field Command Tent & Supply Depot (East)"), EZeroZoneSinaiZoneKind::FieldSupplyDepot,
+		FVector(2200.f, 4800.f, 115.f), FVector(540.f, 380.f, 230.f), FRotator(0.f, 3.4f, 0.f), TEXT("field_tent_canvas"));
+	AddSpec(TEXT("sinai_shell_craters"), TEXT("Scorched Artillery Shell Craters (x8 Carved Terrain Bowls)"), EZeroZoneSinaiZoneKind::ArtilleryShellCrater,
+		FVector(0.f, -1800.f, -75.f), FVector(6800.f, 8000.f, 88.f), FRotator::ZeroRotator, TEXT("sinai_sand"));
 
 	return Specs;
 }
