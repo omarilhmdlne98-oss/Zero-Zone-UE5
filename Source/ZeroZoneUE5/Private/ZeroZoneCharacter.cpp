@@ -425,8 +425,19 @@ void AZeroZoneCharacter::ServerSetLeanAngle_Implementation(float NewTargetLean)
 	TargetLeanAngle = FMath::Clamp(NewTargetLean, -MaxLeanDegrees, MaxLeanDegrees);
 }
 
+void AZeroZoneCharacter::ToggleWeaponInspect()
+{
+	if (bIsDead || bIsADS)
+	{
+		bIsInspectingWeapon = false;
+		return;
+	}
+	bIsInspectingWeapon = !bIsInspectingWeapon;
+}
+
 void AZeroZoneCharacter::StartFire()
 {
+	bIsInspectingWeapon = false;
 	if (!bIsDead && CombatComponent)
 	{
 		CombatComponent->StartFire();

@@ -58,6 +58,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Movement")
 	void SetLeanInput(float LeanDirection);
 
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Combat")
+	void ToggleWeaponInspect();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Combat")
+	bool IsInspectingWeapon() const { return bIsInspectingWeapon; }
+
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
 	static FZeroZoneOperatorStats GetOperatorStatsForClass(EZeroZoneOperatorClass ClassType);
 
@@ -306,6 +312,7 @@ protected:
 	bool bIsAbilityOnCooldown = false;
 	bool bRiotBarrierActive = false;
 	bool bThermalScannerActive = false;
+	bool bIsInspectingWeapon = false;
 	bool bLeanLeftHeld = false;
 	bool bLeanRightHeld = false;
 	float ActiveDamageReductionBonus = 0.f;
