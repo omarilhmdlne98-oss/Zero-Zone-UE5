@@ -28,6 +28,17 @@ TArray<FZeroZoneBattlefieldPBRPreset> UZeroZoneBattlefieldAssetLibrary::GetBattl
 	}
 	{
 		FZeroZoneBattlefieldPBRPreset P;
+		P.PresetId = TEXT("catwalk_grate");
+		P.DisplayName = TEXT("Perforated Steel Catwalk Grate");
+		P.BaseColor = FLinearColor(0.24f, 0.28f, 0.34f, 1.f);
+		P.RimEmissiveColor = FLinearColor(0.22f, 0.74f, 0.97f, 1.f);
+		P.Roughness = 0.40f;
+		P.Metallic = 0.86f;
+		P.RimStrength = 0.36f;
+		Presets.Add(P);
+	}
+	{
+		FZeroZoneBattlefieldPBRPreset P;
 		P.PresetId = TEXT("overwatch_alloy");
 		P.DisplayName = TEXT("Overwatch Tower Alloy");
 		P.BaseColor = FLinearColor(0.21f, 0.25f, 0.31f, 1.f);
@@ -69,9 +80,41 @@ TArray<FZeroZoneTacticalStructureSpec> UZeroZoneBattlefieldAssetLibrary::GetTact
 	{
 		FZeroZoneTacticalStructureSpec S;
 		S.StructureId = TEXT("overwatch_tower");
-		S.DisplayName = TEXT("Armored Overwatch Guard Tower");
-		S.DimensionsCm = FVector(360.f, 360.f, 580.f);
+		S.DisplayName = TEXT("Armored Overwatch Guard Tower (x4)");
+		S.DimensionsCm = FVector(400.f, 400.f, 420.f);
 		S.MaterialPresetId = TEXT("overwatch_alloy");
+		Specs.Add(S);
+	}
+	{
+		FZeroZoneTacticalStructureSpec S;
+		S.StructureId = TEXT("perimeter_catwalk");
+		S.DisplayName = TEXT("Perimeter Steel Catwalk Loop (x4)");
+		S.DimensionsCm = FVector(3500.f, 320.f, 28.f);
+		S.MaterialPresetId = TEXT("catwalk_grate");
+		Specs.Add(S);
+	}
+	{
+		FZeroZoneTacticalStructureSpec S;
+		S.StructureId = TEXT("central_cross_bridge");
+		S.DisplayName = TEXT("Vault Central Cross-Bridge (x2)");
+		S.DimensionsCm = FVector(1310.f, 300.f, 26.f);
+		S.MaterialPresetId = TEXT("catwalk_grate");
+		Specs.Add(S);
+	}
+	{
+		FZeroZoneTacticalStructureSpec S;
+		S.StructureId = TEXT("vault_overpass");
+		S.DisplayName = TEXT("Armored Vault Overpass Ring");
+		S.DimensionsCm = FVector(920.f, 920.f, 28.f);
+		S.MaterialPresetId = TEXT("brushed_steel");
+		Specs.Add(S);
+	}
+	{
+		FZeroZoneTacticalStructureSpec S;
+		S.StructureId = TEXT("inclined_ramp");
+		S.DisplayName = TEXT("Smooth 21.6-deg Steel Access Ramp (x4)");
+		S.DimensionsCm = FVector(280.f, 1140.f, 24.f);
+		S.MaterialPresetId = TEXT("catwalk_grate");
 		Specs.Add(S);
 	}
 	{
@@ -82,24 +125,61 @@ TArray<FZeroZoneTacticalStructureSpec> UZeroZoneBattlefieldAssetLibrary::GetTact
 		S.MaterialPresetId = TEXT("ballistic_bunker");
 		Specs.Add(S);
 	}
-	{
-		FZeroZoneTacticalStructureSpec S;
-		S.StructureId = TEXT("steel_gantry");
-		S.DisplayName = TEXT("Overhead Industrial Steel Gantry");
-		S.DimensionsCm = FVector(2200.f, 300.f, 45.f);
-		S.MaterialPresetId = TEXT("brushed_steel");
-		Specs.Add(S);
-	}
-	{
-		FZeroZoneTacticalStructureSpec S;
-		S.StructureId = TEXT("sniper_catwalk");
-		S.DisplayName = TEXT("Elevated Sniper Perch Deck");
-		S.DimensionsCm = FVector(1800.f, 420.f, 310.f);
-		S.MaterialPresetId = TEXT("brushed_steel");
-		Specs.Add(S);
-	}
 
 	return Specs;
+}
+
+TArray<FZeroZoneBridgeNetworkSegment> UZeroZoneBattlefieldAssetLibrary::GetUpperCombatNetworkSpecs()
+{
+	TArray<FZeroZoneBridgeNetworkSegment> Segments;
+	constexpr float UpperDeckZ = 420.f;
+	constexpr float TowerCoord = 1950.f;
+	constexpr float RampPitchDeg = 21.61f;
+	constexpr float RampSlopeLen = 1140.2f;
+
+	auto AddSeg = [&Segments](const TCHAR* Id, EZeroZoneBridgeSegmentKind Kind, FVector Loc, FVector Dim, FRotator Rot, const TCHAR* MatId)
+	{
+		FZeroZoneBridgeNetworkSegment Seg;
+		Seg.SegmentId = Id;
+		Seg.Kind = Kind;
+		Seg.LocationCm = Loc;
+		Seg.DimensionsCm = Dim;
+		Seg.RotationDeg = Rot;
+		Seg.MaterialPresetId = MatId;
+		Segments.Add(Seg);
+	};
+
+	// 4 Corner Overwatch Guard Towers (y/z mapped to UE5 cm coordinates)
+	AddSeg(TEXT("overwatch_tower_nw"), EZeroZoneBridgeSegmentKind::OverwatchTower, FVector(-TowerCoord, -TowerCoord, UpperDeckZ), FVector(400.f, 400.f, 32.f), FRotator::ZeroRotator, TEXT("overwatch_alloy"));
+	AddSeg(TEXT("overwatch_tower_ne"), EZeroZoneBridgeSegmentKind::OverwatchTower, FVector(TowerCoord, -TowerCoord, UpperDeckZ), FVector(400.f, 400.f, 32.f), FRotator::ZeroRotator, TEXT("overwatch_alloy"));
+	AddSeg(TEXT("overwatch_tower_sw"), EZeroZoneBridgeSegmentKind::OverwatchTower, FVector(-TowerCoord, TowerCoord, UpperDeckZ), FVector(400.f, 400.f, 32.f), FRotator::ZeroRotator, TEXT("overwatch_alloy"));
+	AddSeg(TEXT("overwatch_tower_se"), EZeroZoneBridgeSegmentKind::OverwatchTower, FVector(TowerCoord, TowerCoord, UpperDeckZ), FVector(400.f, 400.f, 32.f), FRotator::ZeroRotator, TEXT("overwatch_alloy"));
+
+	// 4 Perimeter Steel Catwalks linking all 4 Overwatch Guard Towers
+	AddSeg(TEXT("catwalk_north"), EZeroZoneBridgeSegmentKind::PerimeterCatwalk, FVector(0.f, -TowerCoord, UpperDeckZ), FVector(3500.f, 320.f, 28.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("catwalk_south"), EZeroZoneBridgeSegmentKind::PerimeterCatwalk, FVector(0.f, TowerCoord, UpperDeckZ), FVector(3500.f, 320.f, 28.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("catwalk_west"), EZeroZoneBridgeSegmentKind::PerimeterCatwalk, FVector(-TowerCoord, 0.f, UpperDeckZ), FVector(320.f, 3500.f, 28.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("catwalk_east"), EZeroZoneBridgeSegmentKind::PerimeterCatwalk, FVector(TowerCoord, 0.f, UpperDeckZ), FVector(320.f, 3500.f, 28.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+
+	// Central Vault Overpass Ring
+	AddSeg(TEXT("vault_overpass_n"), EZeroZoneBridgeSegmentKind::VaultOverpass, FVector(0.f, -350.f, UpperDeckZ), FVector(920.f, 260.f, 28.f), FRotator::ZeroRotator, TEXT("brushed_steel"));
+	AddSeg(TEXT("vault_overpass_s"), EZeroZoneBridgeSegmentKind::VaultOverpass, FVector(0.f, 350.f, UpperDeckZ), FVector(920.f, 260.f, 28.f), FRotator::ZeroRotator, TEXT("brushed_steel"));
+	AddSeg(TEXT("vault_overpass_w"), EZeroZoneBridgeSegmentKind::VaultOverpass, FVector(-350.f, 0.f, UpperDeckZ), FVector(260.f, 440.f, 28.f), FRotator::ZeroRotator, TEXT("brushed_steel"));
+	AddSeg(TEXT("vault_overpass_e"), EZeroZoneBridgeSegmentKind::VaultOverpass, FVector(350.f, 0.f, UpperDeckZ), FVector(260.f, 440.f, 28.f), FRotator::ZeroRotator, TEXT("brushed_steel"));
+
+	// 2 Central Cross-Bridges (North-South & East-West spans connecting perimeter catwalks to Vault Overpass)
+	AddSeg(TEXT("cross_bridge_n"), EZeroZoneBridgeSegmentKind::CentralCrossBridge, FVector(0.f, -1135.f, UpperDeckZ), FVector(300.f, 1310.f, 26.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("cross_bridge_s"), EZeroZoneBridgeSegmentKind::CentralCrossBridge, FVector(0.f, 1135.f, UpperDeckZ), FVector(300.f, 1310.f, 26.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("cross_bridge_w"), EZeroZoneBridgeSegmentKind::CentralCrossBridge, FVector(-1135.f, 0.f, UpperDeckZ), FVector(1310.f, 300.f, 26.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+	AddSeg(TEXT("cross_bridge_e"), EZeroZoneBridgeSegmentKind::CentralCrossBridge, FVector(1135.f, 0.f, UpperDeckZ), FVector(1310.f, 300.f, 26.f), FRotator::ZeroRotator, TEXT("catwalk_grate"));
+
+	// 4 Smooth Inclined Access Ramps (21.61 deg incline from ground to UpperDeckZ)
+	AddSeg(TEXT("access_ramp_nw"), EZeroZoneBridgeSegmentKind::InclinedRamp, FVector(-1180.f, -1260.f, UpperDeckZ * 0.5f), FVector(280.f, RampSlopeLen, 24.f), FRotator(RampPitchDeg, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSeg(TEXT("access_ramp_ne"), EZeroZoneBridgeSegmentKind::InclinedRamp, FVector(1180.f, -1260.f, UpperDeckZ * 0.5f), FVector(280.f, RampSlopeLen, 24.f), FRotator(RampPitchDeg, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSeg(TEXT("access_ramp_sw"), EZeroZoneBridgeSegmentKind::InclinedRamp, FVector(-1180.f, 1260.f, UpperDeckZ * 0.5f), FVector(280.f, RampSlopeLen, 24.f), FRotator(-RampPitchDeg, 0.f, 0.f), TEXT("catwalk_grate"));
+	AddSeg(TEXT("access_ramp_se"), EZeroZoneBridgeSegmentKind::InclinedRamp, FVector(1180.f, 1260.f, UpperDeckZ * 0.5f), FVector(280.f, RampSlopeLen, 24.f), FRotator(-RampPitchDeg, 0.f, 0.f), TEXT("catwalk_grate"));
+
+	return Segments;
 }
 
 FZeroZoneWeaponInspectionSpec UZeroZoneBattlefieldAssetLibrary::GetWeaponInspectionSpec(EZeroZoneWeaponType WeaponType)

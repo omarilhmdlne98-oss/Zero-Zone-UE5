@@ -7,6 +7,16 @@
 #include "ZeroZoneTypes.h"
 #include "ZeroZoneBattlefieldAssetLibrary.generated.h"
 
+UENUM(BlueprintType)
+enum class EZeroZoneBridgeSegmentKind : uint8
+{
+	OverwatchTower	UMETA(DisplayName = "Overwatch Tower"),
+	PerimeterCatwalk UMETA(DisplayName = "Perimeter Catwalk"),
+	CentralCrossBridge UMETA(DisplayName = "Central Cross-Bridge"),
+	VaultOverpass	UMETA(DisplayName = "Vault Overpass"),
+	InclinedRamp	UMETA(DisplayName = "Inclined Access Ramp")
+};
+
 USTRUCT(BlueprintType)
 struct FZeroZoneBattlefieldPBRPreset
 {
@@ -53,6 +63,30 @@ struct FZeroZoneTacticalStructureSpec
 };
 
 USTRUCT(BlueprintType)
+struct FZeroZoneBridgeNetworkSegment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	FString SegmentId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	EZeroZoneBridgeSegmentKind Kind = EZeroZoneBridgeSegmentKind::PerimeterCatwalk;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	FVector LocationCm = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	FVector DimensionsCm = FVector(300.f, 300.f, 28.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	FRotator RotationDeg = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|BridgeNetwork")
+	FString MaterialPresetId = TEXT("catwalk_grate");
+};
+
+USTRUCT(BlueprintType)
 struct FZeroZoneWeaponInspectionSpec
 {
 	GENERATED_BODY()
@@ -87,6 +121,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
 	static TArray<FZeroZoneTacticalStructureSpec> GetTacticalStructureSpecs();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
+	static TArray<FZeroZoneBridgeNetworkSegment> GetUpperCombatNetworkSpecs();
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
 	static FZeroZoneWeaponInspectionSpec GetWeaponInspectionSpec(EZeroZoneWeaponType WeaponType);
