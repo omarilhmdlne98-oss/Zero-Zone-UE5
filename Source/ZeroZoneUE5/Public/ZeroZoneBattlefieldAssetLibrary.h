@@ -269,6 +269,45 @@ struct FZeroZoneMinimapRadarSpec
 	bool bShowExplosiveBarrels = true;
 };
 
+UENUM(BlueprintType)
+enum class EZeroZoneSinaiTimeOfDay : uint8
+{
+	Dawn		UMETA(DisplayName = "Sinai Dawn (06:15)"),
+	Noon		UMETA(DisplayName = "Sinai High Noon (12:30)"),
+	GoldenDusk	UMETA(DisplayName = "Sinai Golden Dusk (17:30)"),
+	DesertNight	UMETA(DisplayName = "Sinai Desert Night (22:30)")
+};
+
+USTRUCT(BlueprintType)
+struct FZeroZoneSinaiAtmospherePreset
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	EZeroZoneSinaiTimeOfDay TimeOfDay = EZeroZoneSinaiTimeOfDay::GoldenDusk;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FString PresetLabel = TEXT("DUSK // 17:30");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FVector SunDirection = FVector(42.f, 34.f, 32.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FLinearColor SunColor = FLinearColor(1.0f, 0.81f, 0.59f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	float SunIntensity = 1.95f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FLinearColor ZenithColor = FLinearColor(0.18f, 0.35f, 0.57f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	FLinearColor HorizonFogColor = FLinearColor(0.85f, 0.71f, 0.50f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Sinai1973")
+	float FogDensity = 0.0042f;
+};
+
 UCLASS()
 class ZEROZONEUE5_API UZeroZoneBattlefieldAssetLibrary : public UBlueprintFunctionLibrary
 {
@@ -304,4 +343,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
 	static FZeroZoneMinimapRadarSpec GetMinimapRadarSpec();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Sinai1973")
+	static TArray<FZeroZoneSinaiAtmospherePreset> GetSinaiAtmospherePresets();
 };

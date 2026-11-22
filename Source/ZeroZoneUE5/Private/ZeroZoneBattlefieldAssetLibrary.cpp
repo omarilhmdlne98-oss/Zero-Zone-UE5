@@ -558,3 +558,34 @@ FZeroZoneMinimapRadarSpec UZeroZoneBattlefieldAssetLibrary::GetMinimapRadarSpec(
 	Spec.bShowExplosiveBarrels = true;
 	return Spec;
 }
+
+TArray<FZeroZoneSinaiAtmospherePreset> UZeroZoneBattlefieldAssetLibrary::GetSinaiAtmospherePresets()
+{
+	TArray<FZeroZoneSinaiAtmospherePreset> Presets;
+	Presets.Reserve(4);
+
+	auto AddAtmo = [&Presets](EZeroZoneSinaiTimeOfDay Tod, const TCHAR* Label, FVector Dir, FLinearColor SunCol, float Intensity, FLinearColor Zenith, FLinearColor Horizon, float Fog)
+	{
+		FZeroZoneSinaiAtmospherePreset P;
+		P.TimeOfDay = Tod;
+		P.PresetLabel = Label;
+		P.SunDirection = Dir;
+		P.SunColor = SunCol;
+		P.SunIntensity = Intensity;
+		P.ZenithColor = Zenith;
+		P.HorizonFogColor = Horizon;
+		P.FogDensity = Fog;
+		Presets.Add(P);
+	};
+
+	AddAtmo(EZeroZoneSinaiTimeOfDay::Dawn, TEXT("DAWN // 06:15"), FVector(64.f, 22.f, 36.f),
+		FLinearColor(1.0f, 0.73f, 0.51f, 1.f), 1.55f, FLinearColor(0.17f, 0.34f, 0.55f, 1.f), FLinearColor(0.86f, 0.64f, 0.48f, 1.f), 0.0046f);
+	AddAtmo(EZeroZoneSinaiTimeOfDay::Noon, TEXT("NOON // 12:30"), FVector(24.f, 92.f, 18.f),
+		FLinearColor(1.0f, 0.97f, 0.91f, 1.f), 2.35f, FLinearColor(0.16f, 0.45f, 0.77f, 1.f), FLinearColor(0.89f, 0.78f, 0.60f, 1.f), 0.0034f);
+	AddAtmo(EZeroZoneSinaiTimeOfDay::GoldenDusk, TEXT("DUSK // 17:30"), FVector(42.f, 34.f, 32.f),
+		FLinearColor(1.0f, 0.81f, 0.59f, 1.f), 1.95f, FLinearColor(0.18f, 0.35f, 0.57f, 1.f), FLinearColor(0.85f, 0.71f, 0.50f, 1.f), 0.0042f);
+	AddAtmo(EZeroZoneSinaiTimeOfDay::DesertNight, TEXT("NIGHT // 22:30"), FVector(-38.f, 48.f, -28.f),
+		FLinearColor(0.61f, 0.72f, 0.91f, 1.f), 0.72f, FLinearColor(0.04f, 0.07f, 0.15f, 1.f), FLinearColor(0.11f, 0.18f, 0.27f, 1.f), 0.0052f);
+
+	return Presets;
+}
