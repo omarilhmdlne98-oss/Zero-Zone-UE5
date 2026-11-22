@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "ZeroZoneTypes.h"
+#include "ZeroZoneBattlefieldAssetLibrary.h"
 #include "ZeroZoneCharacter.generated.h"
 
 class USpringArmComponent;
@@ -20,6 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnShieldChangedSignature, float, C
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOperatorClassChangedSignature, EZeroZoneOperatorClass, NewOperatorClass);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDiedSignature, AZeroZoneCharacter*, DeadCharacter);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLocomotionStateChangedSignature, EZeroZoneLocomotionState, NewLocomotionState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDirectionalDamageSignature, float, RelativeDamageAngleDeg);
 
 UCLASS()
 class ZEROZONEUE5_API AZeroZoneCharacter : public ACharacter
@@ -63,6 +65,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Combat")
 	bool IsInspectingWeapon() const { return bIsInspectingWeapon; }
+
+	UFUNCTION(BlueprintCallable, Category = "ZeroZone|Combat")
+	void NotifyDirectionalDamage(const FVector& DamageOrigin);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|Combat")
+	FZeroZoneWeaponAttachmentSpec GetActiveWeaponAttachmentSpec() const;
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|Operator")
 	static FZeroZoneOperatorStats GetOperatorStatsForClass(EZeroZoneOperatorClass ClassType);
@@ -132,6 +140,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "ZeroZone|Events")
 	FOnLocomotionStateChangedSignature OnLocomotionStateChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "ZeroZone|Events")
+	FOnDirectionalDamageSignature OnDirectionalDamageReceived;
 
 protected:
 	virtual void BeginPlay() override;

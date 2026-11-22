@@ -110,6 +110,54 @@ struct FZeroZoneWeaponInspectionSpec
 	FString ShaderProfile = TEXT("Vulkan_GLSL_450_PBR_Fresnel");
 };
 
+USTRUCT(BlueprintType)
+struct FZeroZoneWeaponAttachmentSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	FString WeaponId = TEXT("rifle");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	FString AttachmentName = TEXT("Holographic Red-Dot Sight");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	FString AttachmentType = TEXT("HoloRedDot");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	FLinearColor ReticleColor = FLinearColor(1.0f, 0.16f, 0.16f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	float ADSFOV = 50.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Attachments")
+	bool bHasLaserBeam = false;
+};
+
+USTRUCT(BlueprintType)
+struct FZeroZoneExplosiveBarrelSpec
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	FString BarrelId;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	FVector LocationCm = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	float MaxHealth = 40.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	float BlastRadiusCm = 650.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	float MaxSplashDamage = 120.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ZeroZone|Explosives")
+	float RespawnDelaySeconds = 25.f;
+};
+
 UCLASS()
 class ZEROZONEUE5_API UZeroZoneBattlefieldAssetLibrary : public UBlueprintFunctionLibrary
 {
@@ -127,4 +175,13 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
 	static FZeroZoneWeaponInspectionSpec GetWeaponInspectionSpec(EZeroZoneWeaponType WeaponType);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
+	static TArray<FZeroZoneWeaponAttachmentSpec> GetWeaponAttachmentSpecs();
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
+	static FZeroZoneWeaponAttachmentSpec GetWeaponAttachmentSpecForType(EZeroZoneWeaponType WeaponType);
+
+	UFUNCTION(BlueprintPure, Category = "ZeroZone|BattlefieldAssets")
+	static TArray<FZeroZoneExplosiveBarrelSpec> GetExplosiveBarrelSpecs();
 };

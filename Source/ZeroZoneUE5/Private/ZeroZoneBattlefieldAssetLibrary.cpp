@@ -212,3 +212,78 @@ FZeroZoneWeaponInspectionSpec UZeroZoneBattlefieldAssetLibrary::GetWeaponInspect
 	}
 	return Spec;
 }
+
+FZeroZoneWeaponAttachmentSpec UZeroZoneBattlefieldAssetLibrary::GetWeaponAttachmentSpecForType(EZeroZoneWeaponType WeaponType)
+{
+	FZeroZoneWeaponAttachmentSpec Spec;
+	switch (WeaponType)
+	{
+	case EZeroZoneWeaponType::SniperRifle:
+		Spec.WeaponId = TEXT("railgun");
+		Spec.AttachmentName = TEXT("XR-9 Digital Rail Scope");
+		Spec.AttachmentType = TEXT("DigitalRailScope");
+		Spec.ReticleColor = FLinearColor(0.75f, 0.52f, 0.99f, 1.f);
+		Spec.ADSFOV = 32.f;
+		Spec.bHasLaserBeam = false;
+		break;
+	case EZeroZoneWeaponType::Shotgun:
+		Spec.WeaponId = TEXT("shotgun");
+		Spec.AttachmentName = TEXT("M-12 Green Tactical Laser");
+		Spec.AttachmentType = TEXT("GreenTacticalLaser");
+		Spec.ReticleColor = FLinearColor(0.13f, 1.0f, 0.40f, 1.f);
+		Spec.ADSFOV = 56.f;
+		Spec.bHasLaserBeam = true;
+		break;
+	case EZeroZoneWeaponType::AssaultRifle:
+	default:
+		Spec.WeaponId = TEXT("rifle");
+		Spec.AttachmentName = TEXT("VX-47 Holographic Red-Dot Sight");
+		Spec.AttachmentType = TEXT("HoloRedDot");
+		Spec.ReticleColor = FLinearColor(1.0f, 0.16f, 0.16f, 1.f);
+		Spec.ADSFOV = 50.f;
+		Spec.bHasLaserBeam = false;
+		break;
+	}
+	return Spec;
+}
+
+TArray<FZeroZoneWeaponAttachmentSpec> UZeroZoneBattlefieldAssetLibrary::GetWeaponAttachmentSpecs()
+{
+	TArray<FZeroZoneWeaponAttachmentSpec> Specs;
+	Specs.Add(GetWeaponAttachmentSpecForType(EZeroZoneWeaponType::AssaultRifle));
+	Specs.Add(GetWeaponAttachmentSpecForType(EZeroZoneWeaponType::SniperRifle));
+	Specs.Add(GetWeaponAttachmentSpecForType(EZeroZoneWeaponType::Shotgun));
+	return Specs;
+}
+
+TArray<FZeroZoneExplosiveBarrelSpec> UZeroZoneBattlefieldAssetLibrary::GetExplosiveBarrelSpecs()
+{
+	TArray<FZeroZoneExplosiveBarrelSpec> Barrels;
+	constexpr float UpperDeckZ = 420.f;
+
+	auto AddBarrel = [&Barrels](const TCHAR* Id, float X, float Y, float Z)
+	{
+		FZeroZoneExplosiveBarrelSpec Spec;
+		Spec.BarrelId = Id;
+		Spec.LocationCm = FVector(X, Y, Z);
+		Spec.MaxHealth = 40.f;
+		Spec.BlastRadiusCm = 650.f;
+		Spec.MaxSplashDamage = 120.f;
+		Spec.RespawnDelaySeconds = 25.f;
+		Barrels.Add(Spec);
+	};
+
+	// 4 Ground-level choke points (mirrors Zero-Zone-Web barrelDefs in cm)
+	AddBarrel(TEXT("barrel_g_nw"), -750.f, -1150.f, 0.f);
+	AddBarrel(TEXT("barrel_g_ne"), 750.f, -1150.f, 0.f);
+	AddBarrel(TEXT("barrel_g_sw"), -750.f, 1150.f, 0.f);
+	AddBarrel(TEXT("barrel_g_se"), 750.f, 1150.f, 0.f);
+
+	// 4 Upper catwalk / cross-bridge choke points (Z = 420cm)
+	AddBarrel(TEXT("barrel_u_w"), -1950.f, -900.f, UpperDeckZ);
+	AddBarrel(TEXT("barrel_u_e"), 1950.f, 900.f, UpperDeckZ);
+	AddBarrel(TEXT("barrel_u_n"), 0.f, -1620.f, UpperDeckZ);
+	AddBarrel(TEXT("barrel_u_s"), 0.f, 1620.f, UpperDeckZ);
+
+	return Barrels;
+}

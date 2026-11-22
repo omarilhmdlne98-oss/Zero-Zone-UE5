@@ -835,6 +835,33 @@ void AZeroZoneCharacter::ResetAbilityCooldown()
 	bIsAbilityOnCooldown = false;
 }
 
+void AZeroZoneCharacter::NotifyDirectionalDamage(const FVector& DamageOrigin)
+{
+	const FVector ToSource = (DamageOrigin - GetActorLocation()).GetSafeNormal2D();
+	if (ToSource.IsNearlyZero())
+	{
+		return;
+	}
+
+	const FVector Fwd2D = GetActorForwardVector().GetSafeNormal2D();
+	const FVector Right2D = GetActorRightVector().GetSafeNormal2D();
+	const float DotForward = FVector::DotProduct(ToSource, Fwd2D);
+	const float DotRight = FVector::DotProduct(ToSource, Right2D);
+	const float RelativeAngleDeg = FMath::RadiansToDegrees(FMath::Atan2(DotRight, DotForward));
+
+	OnDirectionalDamageReceived.Broadcast(RelativeAngleDeg);
+}
+
+FZeroZoneWeaponAttachmentSpec AZeroZoneCharacter::GetActiveWeaponAttachmentSpec() const
+{
+	EZeroZoneWeaponType ActiveType = EZeroZoneWeaponType::AssaultRifle;
+	if (CombatComponent && CombatComponent->GetEquippedWeapon())
+	{
+		ActiveType = CombatComponent->GetEquippedWeapon()->GetWeaponStats().WeaponType;
+	}
+	return UZeroZoneBattlefieldAssetLibrary::GetWeaponAttachmentSpecForType(ActiveType);
+}
+
 float AZeroZoneCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (!HasAuthority() || bIsDead || DamageAmount <= 0.f)
@@ -843,6 +870,9 @@ float AZeroZoneCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 	}
 
 	float HitZoneMultiplier = 1.0f;
+	bool bHasDamageOrigin = false;
+	FVector DamageOrigin = FVector::ZeroVector;
+
 	if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		const FPointDamageEvent* PointEvent = static_cast<const FPointDamageEvent*>(&DamageEvent);
@@ -850,7 +880,39 @@ float AZeroZoneCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 		{
 			const EZeroZoneHitZone Zone = ResolveHitZoneFromBone(PointEvent->HitInfo.BoneName);
 			HitZoneMultiplier = GetDamageMultiplierForHitZone(Zone);
+			DamageOrigin = !PointEvent->HitInfo.TraceStart.IsNearlyZero()
+				? PointEvent->HitInfo.TraceStart
+				: PointEvent->HitInfo.ImpactPoint;
+			bHasDamageOrigin = true;
 		}
+	}
+	else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+	{
+		const FRadialDamageEvent* RadialEvent = static_cast<const FRadialDamageEvent*>(&DamageEvent);
+		if (RadialEvent)
+		{
+			DamageOrigin = RadialEvent->Origin;
+			bHasDamageOrigin = true;
+		}
+	}
+
+	if (!bHasDamageOrigin)
+	{
+		if (DamageCauser)
+		{
+			DamageOrigin = DamageCauser->GetActorLocation();
+			bHasDamageOrigin = true;
+		}
+		else if (EventInstigator && EventInstigator->GetPawn())
+		{
+			DamageOrigin = EventInstigator->GetPawn()->GetActorLocation();
+			bHasDamageOrigin = true;
+		}
+	}
+
+	if (bHasDamageOrigin)
+	{
+		NotifyDirectionalDamage(DamageOrigin);
 	}
 
 	const float TotalReduction = FMath::Clamp(CurrentOperatorStats.BaseDamageReduction + ActiveDamageReductionBonus, 0.f, 0.85f);
