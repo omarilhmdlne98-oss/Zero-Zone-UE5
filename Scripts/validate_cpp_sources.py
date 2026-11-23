@@ -17,7 +17,7 @@ sources = tuple(sorted(private.glob(chr(42) + '.cpp')))
 if not headers or not sources:
     fail('UE module C++ headers or sources are missing')
 for header in headers:
-    text = header.read_text(encoding='utf-8')
+    text = header.read\_text(encoding='utf-8')
     if '#pragma once' not in text:
         fail(str(header) + ' is missing pragma once')
     includes = list()
@@ -34,31 +34,31 @@ for header in headers:
     if generated and next(reversed(includes)) != next(reversed(generated)):
         fail(str(header) + ' must keep its generated include last')
     implementation = private / (header.stem + '.cpp')
-    if header.stem != 'ZeroZoneTypes' and not implementation.is_file():
+    if header.stem != 'ZeroZoneTypes' and not implementation.is\_file():
         fail(str(header) + ' has no matching ' + implementation.name)
 
 for source in sources:
-    text = source.read_text(encoding='utf-8')
+    text = source.read\_text(encoding='utf-8')
     first = next((line.strip() for line in text.splitlines() if line.strip() and not line.strip().startswith('//')), '')
     expected = '#include ' + chr(34) + source.stem + '.h' + chr(34)
     if first != expected:
         fail(str(source) + ' must include its matching header first')
 
-version = subprocess.run(('clang-format', '--version'), capture_output=True, text=True)
+version = subprocess.run(('clang-format', '--version'), capture\_output=True, text=True)
 if version.returncode:
     fail('clang-format is not installed')
 for path in headers + sources:
-    result = subprocess.run(('clang-format', '--dry-run', '--style=LLVM', str(path)), capture_output=True, text=True)
-    diagnostics = result.stdout + result.stderr
+    result = subprocess.run(('clang-format', '--style=LLVM', str(path)), capture\_output=True, text=True)
+    diagnostics = result.stderr
     if result.returncode or 'error:' in diagnostics:
         fail('Clang could not parse ' + str(path) + ': ' + diagnostics)
 
-probeText = probe.read_text(encoding='utf-8')
+probeText = probe.read\_text(encoding='utf-8')
 if 'FZeroZoneGpsSectorMetadata' not in probeText or 'FZeroZoneTheaterSector' not in probeText:
     fail('Clang AST probe does not cover theater sector metadata')
-astResult = subprocess.run(('clang++', '-std=c++20', '-fsyntax-only', '-Xclang', '-ast-dump=json', str(probe)), capture_output=True, text=True)
+astResult = subprocess.run(('clang++', '-std=c++20', '-fsyntax-only', '-Xclang', '-ast-dump=json', str(probe)), capture\_output=True, text=True)
 if astResult.returncode:
-    fail('clang++ AST probe failed: ' + astResult.stderr)
+    fail('clang++AST probe failed: ' + astResult.stderr)
 try:
     tree = json.loads(astResult.stdout)
 except json.JSONDecodeError as error:
