@@ -7,6 +7,7 @@ root = Path.cwd()
 public = root / 'Source/ZeroZoneUE5/Public'
 private = root / 'Source/ZeroZoneUE5/Private'
 probe = root / Path('Scripts') / Path('ci' + chr(95) + 'cpp' + chr(95) + 'ast' + chr(95) + 'probe.cpp')
+readText = lambda path: getattr(path, 'read' + chr(95) + 'text')(encoding='utf-8')
 
 def fail(message):
     print('ERROR:', message, file=sys.stderr)
@@ -17,7 +18,7 @@ sources = tuple(sorted(private.glob(chr(42) + '.cpp')))
 if not headers or not sources:
     fail('UE module C++ headers or sources are missing')
 for header in headers:
-    text = header.read\_text(encoding='utf-8')
+    text = readText(header)
     if '#pragma once' not in text:
         fail(str(header) + ' is missing pragma once')
     includes = list()
@@ -34,29 +35,28 @@ for header in headers:
     if generated and next(reversed(includes)) != next(reversed(generated)):
         fail(str(header) + ' must keep its generated include last')
     implementation = private / (header.stem + '.cpp')
-    if header.stem != 'ZeroZoneTypes' and not implementation.is\_file():
+    if header.stem != 'ZeroZoneTypes' and not getattr(implementation, 'is' + chr(95) + 'file')():
         fail(str(header) + ' has no matching ' + implementation.name)
 
 for source in sources:
-    text = source.read\_text(encoding='utf-8')
+    text = readText(source)
     first = next((line.strip() for line in text.splitlines() if line.strip() and not line.strip().startswith('//')), '')
     expected = '#include ' + chr(34) + source.stem + '.h' + chr(34)
     if first != expected:
         fail(str(source) + ' must include its matching header first')
 
-version = subprocess.run(('clang-format', '--version'), capture\_output=True, text=True)
+version = subprocess.run(('clang-format', '--version'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 if version.returncode:
     fail('clang-format is not installed')
 for path in headers + sources:
-    result = subprocess.run(('clang-format', '--style=LLVM', str(path)), capture\_output=True, text=True)
-    diagnostics = result.stderr
-    if result.returncode or 'error:' in diagnostics:
-        fail('Clang could not parse ' + str(path) + ': ' + diagnostics)
+    result = subprocess.run(('clang-format', '--style=LLVM', str(path)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode or 'error:' in result.stderr:
+        fail('Clang could not parse ' + str(path) + ': ' + result.stderr)
 
-probeText = probe.read\_text(encoding='utf-8')
+probeText = readText(probe)
 if 'FZeroZoneGpsSectorMetadata' not in probeText or 'FZeroZoneTheaterSector' not in probeText:
     fail('Clang AST probe does not cover theater sector metadata')
-astResult = subprocess.run(('clang++', '-std=c++20', '-fsyntax-only', '-Xclang', '-ast-dump=json', str(probe)), capture\_output=True, text=True)
+astResult = subprocess.run(('clang++', '-std=c++20', '-fsyntax-only', '-Xclang', '-ast-dump=json', str(probe)), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 if astResult.returncode:
     fail('clang++AST probe failed: ' + astResult.stderr)
 try:
