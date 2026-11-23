@@ -1,50 +1,67 @@
-name: UE 5.4 build and theater bake
+name: UE 5.4 hosted validation
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      run_native_ue_build:
+        description: Run UHT, native builds, and bake partitioned theater maps on the licensed UE runner
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
-  structure:
+  hosted-validation:
+    name: Clang, Python, YAML and shell validation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Validate descriptor and editor script
+      - name: Install Clang tools
         run: |
-          python3 -m json.tool ZeroZoneUE5.uproject >/dev/null
-          python3 -m py_compile Scripts/build_theaters.py
-          test -f Source/ZeroZoneUE5.Target.cs
-          test -f Source/ZeroZoneUE5Editor.Target.cs
-  engine:
-    name: UHT, Editor and Game builds, partitioned map bake
-    if: github.event_name != 'pull_request'
+          sudo apt-get update
+          sudo apt-get install -y clang clang-format ruby
+      - name: Validate C++ source syntax, headers, and AST probe
+        run: python3 Scripts/validate_cpp_sources.py
+      - name: Verify theater generator contract
+        run: |
+          python3 -m py_compile Scripts/build_theaters.py Scripts/validate_theater_generator.py Scripts/validate_cpp_sources.py
+          python3 Scripts/validate_theater_generator.py
+      - name: Parse workflow YAML and all Bash blocks
+        run: ruby Scripts/validate_workflow.rb
+  native-ue-build:
+    name: Optional UE 5.4 UHT, builds and map bake
+    needs: hosted-validation
+    if: github.event_name == 'workflow_dispatch' && inputs.run_native_ue_build == true
     runs-on: [self-hosted, linux, x64, ue-5.4]
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           clean: true
           persist-credentials: false
-      - name: Compile reflected headers and link both targets
+      - name: Compile reflected headers and link Editor and Game targets
         shell: bash
         run: |
           set -euo pipefail
-          : "${UE_ROOT:?Set UE_ROOT to the licensed UE 5.4 installation on the runner}"
+          : "${UE_ROOT:?Set UE_ROOT to the licensed UE 5.4 installation on this runner}"
           python3 - "$UE_ROOT/Engine/Build/Build.version" <<'PY'
           import json, sys
-          v = json.load(open(sys.argv[1]))
-          assert (v['MajorVersion'], v['MinorVersion']) == (5, 4), v
+          version = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert (version["MajorVersion"], version["MinorVersion"]) == (5, 4), version
           PY
           build="$UE_ROOT/Engine/Build/BatchFiles/Linux/Build.sh"
           for target in ZeroZoneUE5Editor ZeroZoneUE5; do
             bash "$build" "$target" Linux Development -Project="$PWD/ZeroZoneUE5.uproject" -WaitMutex -NoUnity
           done
-      - name: Bake landscapes and check saved level packages
+      - name: Bake landscapes and verify saved World Partition packages
         shell: bash
         run: |
           set -euo pipefail
@@ -53,7 +70,8 @@ jobs:
             test -s "Content/Theaters/$level.umap"
             test -n "$(find "Content/__ExternalActors__/Theaters/$level" -name '*.uasset' -print -quit)"
           done
-      - uses: actions/upload-artifact@v4
+      - name: Upload generated theater content
+        uses: actions/upload-artifact@v4
         with:
           name: partitioned-theaters-${{ github.sha }}
           path: Content/
