@@ -1,147 +1,60 @@
-name: UE5.4 Project Validation & Headless Build
-
+name: UE 5.4 build and theater bake
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
-  validate-ue5-project:
-    name: Validate UE 5.4 Structure & C++ Sources
+  structure:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate .uproject and UE 5.4 project structure
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate descriptor and editor script
         run: |
-          python3 - << 'EOF'
-          import json
-          from pathlib import Path
-          import sys
-
-          required_files = [
-              "ZeroZoneUE5.uproject",
-              "Config/DefaultEngine.ini",
-              "Config/DefaultGame.ini",
-              "Config/DefaultInput.ini",
-              "Source/ZeroZoneUE5.Target.cs",
-              "Source/ZeroZoneUE5Editor.Target.cs",
-              "Source/ZeroZoneUE5/ZeroZoneUE5.Build.cs",
-              "Source/ZeroZoneUE5/ZeroZoneUE5.h",
-              "Source/ZeroZoneUE5/ZeroZoneUE5.cpp",
-          ]
-          missing = [f for f in required_files if not Path(f).is_file()]
-          if missing:
-              print(f"Missing required UE5 files: {missing}")
-              sys.exit(1)
-
-          uproject = json.loads(Path("ZeroZoneUE5.uproject").read_text(encoding="utf-8"))
-          assert uproject.get("EngineAssociation") == "5.4", f"Expected EngineAssociation 5.4, got {uproject.get('EngineAssociation')}"
-          modules = [m.get("Name") for m in uproject.get("Modules", [])]
-          assert "ZeroZoneUE5" in modules, "ZeroZoneUE5 module missing in .uproject"
-          print("UE 5.4 project structure validated successfully.")
-          EOF
-
-      - name: Validate ZeroZoneUE5.Build.cs module dependencies
-        run: |
-          python3 - << 'EOF'
-          from pathlib import Path
-          import sys
-
-          build_cs = Path("Source/ZeroZoneUE5/ZeroZoneUE5.Build.cs").read_text(encoding="utf-8")
-          required_modules = [
-              "Core",
-              "CoreUObject",
-              "Engine",
-              "InputCore",
-              "EnhancedInput",
-              "NetCore",
-              "WebSockets",
-              "Json",
-              "JsonUtilities",
-          ]
-          missing = [m for m in required_modules if f'"{m}"' not in build_cs]
-          if missing:
-              print(f"Missing module dependencies in ZeroZoneUE5.Build.cs: {missing}")
-              sys.exit(1)
-          print("All required UE5 module dependencies verified in ZeroZoneUE5.Build.cs.")
-          EOF
-
-      - name: Validate C++ header/source conventions and UHT include order
-        run: |
-          python3 - << 'EOF'
-          from pathlib import Path
-          import re
-          import sys
-
-          public_dir = Path("Source/ZeroZoneUE5/Public")
-          private_dir = Path("Source/ZeroZoneUE5/Private")
-          headers = sorted(public_dir.glob("*.h"))
-          sources = sorted(private_dir.glob("*.cpp"))
-
-          if not headers or not sources:
-              print("No C++ headers or sources found in Source/ZeroZoneUE5/")
-              sys.exit(1)
-
-          errors = []
-          for h in headers:
-              text = h.read_text(encoding="utf-8")
-              if "#pragma once" not in text:
-                  errors.append(f"{h}: missing #pragma once")
-
-              includes = re.findall(r'^\s*#include\s+"([^"]+)"', text, flags=re.MULTILINE)
-              gen_includes = [inc for inc in includes if inc.endswith(".generated.h")]
-              if gen_includes:
-                  if includes[-1] != gen_includes[-1]:
-                      errors.append(f"{h}: .generated.h must be the last #include (found {includes[-1]} after it)")
-
-              expected_cpp = private_dir / f"{h.stem}.cpp"
-              if h.stem != "ZeroZoneTypes" and not expected_cpp.is_file():
-                  errors.append(f"{h}: missing matching implementation file {expected_cpp}")
-
-          for cpp in sources:
-              text = cpp.read_text(encoding="utf-8")
-              expected_header = f'#include "{cpp.stem}.h"'
-              first_non_comment = [
-                  line.strip() for line in text.splitlines()
-                  if line.strip() and not line.strip().startswith("//")
-              ]
-              if not first_non_comment or first_non_comment[0] != expected_header:
-                  errors.append(f"{cpp}: first include should be {expected_header}")
-
-              if text.count("{") != text.count("}"):
-                  errors.append(f"{cpp}: unbalanced curly braces")
-
-          if errors:
-              for err in errors:
-                  print(f"ERROR: {err}")
-              sys.exit(1)
-
-          print(f"Validated {len(headers)} headers and {len(sources)} source files.")
-          EOF
-
-  headless-ue5-compile:
-    name: Headless UE 5.4 Compilation (Container)
-    needs: validate-ue5-project
-    if: ${{ vars.UE5_CONTAINER_ENABLED == 'true' }}
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ vars.UE5_CONTAINER_IMAGE || 'ghcr.io/epicgames/unreal-engine:dev-5.4' }}
-      credentials:
-        username: ${{ secrets.UE5_GHCR_USER }}
-        password: ${{ secrets.UE5_GHCR_TOKEN }}
-
+          python3 -m json.tool ZeroZoneUE5.uproject >/dev/null
+          python3 -m py_compile Scripts/build_theaters.py
+          test -f Source/ZeroZoneUE5.Target.cs
+          test -f Source/ZeroZoneUE5Editor.Target.cs
+  engine:
+    name: UHT, Editor and Game builds, partitioned map bake
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, linux, x64, ue-5.4]
+    timeout-minutes: 180
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build ZeroZoneUE5Editor (Linux Development)
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+          persist-credentials: false
+      - name: Compile reflected headers and link both targets
+        shell: bash
         run: |
-          /home/ue4/UnrealEngine/Engine/Build/BatchFiles/Linux/Build.sh \
-            ZeroZoneUE5Editor Linux Development \
-            -Project="${{ github.workspace }}/ZeroZoneUE5.uproject" \
-            -WaitMutex -FromMsBuild
+          set -euo pipefail
+          : "${UE_ROOT:?Set UE_ROOT to the licensed UE 5.4 installation on the runner}"
+          python3 - "$UE_ROOT/Engine/Build/Build.version" <<'PY'
+          import json, sys
+          v = json.load(open(sys.argv[1]))
+          assert (v['MajorVersion'], v['MinorVersion']) == (5, 4), v
+          PY
+          build="$UE_ROOT/Engine/Build/BatchFiles/Linux/Build.sh"
+          for target in ZeroZoneUE5Editor ZeroZoneUE5; do
+            bash "$build" "$target" Linux Development -Project="$PWD/ZeroZoneUE5.uproject" -WaitMutex -NoUnity
+          done
+      - name: Bake landscapes and check saved level packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$UE_ROOT/Engine/Binaries/Linux/UnrealEditor-Cmd" "$PWD/ZeroZoneUE5.uproject" -run=pythonscript -script="$PWD/Scripts/build_theaters.py" -unattended -nullrhi -nosound -nop4 -stdout -FullStdOutLogOutput
+          for level in AmberCanal ChalkReach; do
+            test -s "Content/Theaters/$level.umap"
+            test -n "$(find "Content/__ExternalActors__/Theaters/$level" -name '*.uasset' -print -quit)"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: partitioned-theaters-${{ github.sha }}
+          path: Content/
+          if-no-files-found: error
