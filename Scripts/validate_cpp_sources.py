@@ -52,15 +52,15 @@ if '#include "ZeroZoneWeapon.h"' not in aiSource:
 combatMarker = 'void AZeroZoneAIController::UpdateCombatBehavior'
 if combatMarker not in aiSource:
     fail(str(aiSourcePath) + ' is missing the combat behavior implementation')
-fireSection = aiSource.split(combatMarker, 1)\[1\]
+_, _, fireSection = aiSource.partition(combatMarker)
 fireContract = (
-    'AZeroZoneWeapon\* EquippedWeapon = Combat-&gt;GetEquippedWeapon();',
-    'if (EquippedWeapon &amp;&amp; !EquippedWeapon-&gt;GetWeaponStats().bIsAutomatic)',
-    'Combat-&gt;StopFire();',
-    'Combat-&gt;StartFire();',
+    'AZeroZoneWeapon* EquippedWeapon = Combat->GetEquippedWeapon();',
+    'if (EquippedWeapon && !EquippedWeapon->GetWeaponStats().bIsAutomatic)',
+    'Combat->StopFire();',
+    'Combat->StartFire();',
 )
 fireOffsets = tuple(fireSection.find(token) for token in fireContract)
-if any(offset &lt; 0 for offset in fireOffsets) or fireOffsets != tuple(sorted(fireOffsets)):
+if any(offset < 0 for offset in fireOffsets) or fireOffsets != tuple(sorted(fireOffsets)):
     fail('AI must re-arm semi-auto weapons before the unconditional combat fire call')
 
 version = subprocess.run(('clang-format', '--version'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
