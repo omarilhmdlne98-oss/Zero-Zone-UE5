@@ -260,7 +260,9 @@ void AZeroZoneWeapon::ServerFire_Implementation(const FVector&, const FVector&)
 
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
 	const float TimeBetweenShots = 1.f / FMath::Max(WeaponStats.FireRate, 0.1f);
-	if (CurrentTime - LastFireTime + KINDA_SMALL_NUMBER < TimeBetweenShots)
+	// Tolerate network jitter: accept shots arriving at >=85% of the nominal interval
+	const auto MinAllowedInterval = TimeBetweenShots * 0.85f;
+	if (CurrentTime - LastFireTime + KINDA_SMALL_NUMBER < MinAllowedInterval)
 	{
 		return;
 	}
