@@ -6,6 +6,7 @@
 #include "TimerManager.h"
 #include "ZeroZoneCharacter.h"
 #include "ZeroZoneCombatComponent.h"
+#include "ZeroZoneWeapon.h"
 
 AZeroZoneAIController::AZeroZoneAIController()
 {
@@ -234,6 +235,11 @@ void AZeroZoneAIController::UpdateCombatBehavior(AZeroZoneCharacter* ControlledC
 	if (UZeroZoneCombatComponent* Combat = ControlledChar->GetCombatComponent())
 	{
 		ControlledChar->StartADS();
+		AZeroZoneWeapon* EquippedWeapon = Combat->GetEquippedWeapon();
+		if (EquippedWeapon && !EquippedWeapon->GetWeaponStats().bIsAutomatic)
+		{
+			Combat->StopFire();
+		}
 		Combat->StartFire();
 	}
 }
