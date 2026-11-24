@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "ZeroZoneCharacter.h"
+#include "ZeroZoneCombatComponent.h"
 #include "ZeroZoneHUD.h"
 #include "ZeroZoneWebSocketSubsystem.h"
 #include "ZeroZoneUE5.h"
@@ -198,51 +199,75 @@ void AZeroZoneWeapon::HandleFireShot()
 		return;
 	}
 
-	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (!OwnerPawn)
+	if (!GetOwner() || !GetWorld())
 	{
 		return;
 	}
 
-	AController* OwnerController = OwnerPawn->GetController();
-	FVector ViewLocation;
-	FRotator ViewRotation;
-
-	if (OwnerController)
+	if (!HasAuthority())
 	{
-		OwnerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
+		LastFireTime = GetWorld()->GetTimeSeconds();
 	}
-	else
-	{
-		ViewLocation = GetActorLocation();
-		ViewRotation = GetActorRotation();
-	}
-
-	const float EffectiveSpreadDeg = WeaponStats.BaseSpreadDegrees * (bIsADS ? WeaponStats.ADSSpreadMultiplier : 1.0f);
-	const float SpreadRad = FMath::DegreesToRadians(EffectiveSpreadDeg);
-	const FVector ShotDirection = FMath::VRandCone(ViewRotation.Vector(), SpreadRad);
-	const FVector TraceEnd = ViewLocation + (ShotDirection * WeaponStats.Range);
-
-	LastFireTime = GetWorld()->GetTimeSeconds();
 	ApplyRecoilToOwner();
 
 	if (HasAuthority())
 	{
-		ExecuteHitscan(ViewLocation, TraceEnd);
+		ServerFire_Implementation(FVector::ZeroVector, FVector::ZeroVector);
 	}
 	else
 	{
-		ServerFire(ViewLocation, TraceEnd);
+		ServerFire(FVector::ZeroVector, FVector::ZeroVector);
 	}
 }
 
-void AZeroZoneWeapon::ServerFire_Implementation(const FVector& TraceStart, const FVector& TraceEnd)
+void AZeroZoneWeapon::ServerFire_Implementation(const FVector&, const FVector&)
 {
-	if (!CanFire())
+	if (!HasAuthority() || !GetWorld() || !CanFire())
 	{
 		return;
 	}
-	ExecuteHitscan(TraceStart, TraceEnd);
+
+	AZeroZoneCharacter* OwnerCharacter = Cast<AZeroZoneCharacter>(GetOwner());
+	if (!OwnerCharacter || OwnerCharacter->IsDead())
+	{
+		return;
+	}
+
+	UZeroZoneCombatComponent* Combat = OwnerCharacter->GetCombatComponent();
+	if (!Combat || Combat->GetEquippedWeapon() != this)
+	{
+		return;
+	}
+
+	AController* OwnerController = OwnerCharacter->GetController();
+	if (!OwnerController)
+	{
+		return;
+	}
+
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	OwnerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
+	const FVector AimDirection = ViewRotation.Vector().GetSafeNormal();
+	if (AimDirection.IsNearlyZero())
+	{
+		return;
+	}
+
+	const float EffectiveSpreadDeg = WeaponStats.BaseSpreadDegrees * (bIsADS ? WeaponStats.ADSSpreadMultiplier : 1.0f);
+	const float SpreadRad = FMath::DegreesToRadians(EffectiveSpreadDeg);
+	const FVector ShotDirection = FMath::VRandCone(AimDirection, SpreadRad);
+
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	const float TimeBetweenShots = 1.f / FMath::Max(WeaponStats.FireRate, 0.1f);
+	if (CurrentTime - LastFireTime + KINDA_SMALL_NUMBER < TimeBetweenShots)
+	{
+		return;
+	}
+
+	LastFireTime = CurrentTime;
+	const FVector TraceEnd = ViewLocation + (ShotDirection * WeaponStats.Range);
+	ExecuteHitscan(ViewLocation, TraceEnd);
 }
 
 void AZeroZoneWeapon::ExecuteBallisticTrace(const FVector& StartLocation, const FVector& ShotDirection, FHitResult& OutHit, FVector& OutImpactPoint) const
