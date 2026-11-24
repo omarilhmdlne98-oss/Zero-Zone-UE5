@@ -45,6 +45,24 @@ for source in sources:
     if first != expected:
         fail(str(source) + ' must include its matching header first')
 
+aiSourcePath = private / 'ZeroZoneAIController.cpp'
+aiSource = readText(aiSourcePath)
+if '#include "ZeroZoneWeapon.h"' not in aiSource:
+    fail(str(aiSourcePath) + ' must include the weapon definition for firing-mode checks')
+combatMarker = 'void AZeroZoneAIController::UpdateCombatBehavior'
+if combatMarker not in aiSource:
+    fail(str(aiSourcePath) + ' is missing the combat behavior implementation')
+fireSection = aiSource.split(combatMarker, 1)\[1\]
+fireContract = (
+    'AZeroZoneWeapon\* EquippedWeapon = Combat-&gt;GetEquippedWeapon();',
+    'if (EquippedWeapon &amp;&amp; !EquippedWeapon-&gt;GetWeaponStats().bIsAutomatic)',
+    'Combat-&gt;StopFire();',
+    'Combat-&gt;StartFire();',
+)
+fireOffsets = tuple(fireSection.find(token) for token in fireContract)
+if any(offset &lt; 0 for offset in fireOffsets) or fireOffsets != tuple(sorted(fireOffsets)):
+    fail('AI must re-arm semi-auto weapons before the unconditional combat fire call')
+
 version = subprocess.run(('clang-format', '--version'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 if version.returncode:
     fail('clang-format is not installed')
@@ -79,4 +97,4 @@ visit(tree)
 required = set(('ETheater', 'FZeroZoneGpsSectorMetadata', 'FZeroZoneTheaterSector', 'Amber', 'Chalk'))
 if not required.issubset(names):
     fail('clang++ AST is missing theater declarations: ' + str(sorted(required - names)))
-print('Clang parsed ' + str(len(headers)) + ' UE headers and ' + str(len(sources)) + ' UE sources; header conventions and theater AST probe passed.')
+print('Clang parsed ' + str(len(headers)) + ' UE headers and ' + str(len(sources)) + ' UE sources; AI semi-auto firing contract, header conventions and theater AST probe passed.')
